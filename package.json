@@ -12,6 +12,12 @@
     "license": "MIT",
     "devDependencies": {
         "browser-sync": "^2.24.6",
-        "gulp": "^3.9.1"
+        "gulp": "^3.9.1",
+        "gulp-clean-css": "^3.10.0",
+        "gulp-concat": "^2.6.1",
+        "gulp-html-replace": "^1.6.2",
+        "gulp-minify-html": "^1.0.6",
+        "gulp-rename": "^1.4.0",
+        "gulp-terser": "^1.0.1"
     }
 }
