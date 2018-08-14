@@ -1,0 +1,10 @@
+
+body {
+    background-color: black;
+}
+
+#board {
+    width: 640px;
+    height: 480px;
+    margin: auto;
+}

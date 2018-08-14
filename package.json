@@ -1,0 +1,17 @@
+{
+    "name": "offline",
+    "version": "0.1.0",
+    "description": "",
+    "private": true,
+    "scripts": {},
+    "keywords": [
+        "game",
+        "js13kgames"
+    ],
+    "author": "Tero Jäntti <tkjantti@gmail.com>",
+    "license": "MIT",
+    "devDependencies": {
+        "browser-sync": "^2.24.6",
+        "gulp": "^3.9.1"
+    }
+}

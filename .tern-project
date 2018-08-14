@@ -1,0 +1,15 @@
+{
+    "libs": [
+        "browser",
+        "ecmascript"
+    ],
+    "loadEagerly": [
+        "src/*.js"
+    ],
+    "dontLoad": [
+        "node_modules/**"
+    ],
+    "plugins": {
+        "es_modules": {}
+    }
+}
