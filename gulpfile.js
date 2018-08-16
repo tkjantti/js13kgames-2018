@@ -11,6 +11,8 @@ const minifyCSS = require('gulp-clean-css');
 const minifyJS = require('gulp-terser');
 const concat = require('gulp-concat');
 const runSequence = require('run-sequence');
+const zip = require('gulp-zip');
+const checkFileSize = require('gulp-check-filesize');
 
 const paths = {
     src: {
@@ -26,8 +28,13 @@ const paths = {
     },
 };
 
-gulp.task('clean', () => {
+gulp.task('cleanDist', () => {
     return gulp.src('dist/*', { read: false })
+        .pipe(deleteFiles());
+});
+
+gulp.task('cleanZip', () => {
+    return gulp.src('zip/*', { read: false })
         .pipe(deleteFiles());
 });
 
@@ -56,10 +63,20 @@ gulp.task('buildJS', () => {
         .pipe(gulp.dest(paths.dist.dir));
 });
 
+gulp.task('zip', () => {
+    const limit = 13 * 1024;
+
+    return gulp.src(`${paths.dist.dir}/**`)
+        .pipe(zip('game.zip'))
+        .pipe(gulp.dest('zip'))
+        .pipe(checkFileSize({ fileSizeLimit: limit }));
+});
+
 gulp.task('build', callback => {
     runSequence(
-        'clean',
+        ['cleanDist', 'cleanZip'],
         ['buildCSS', 'buildHTML', 'buildJS'],
+        'zip',
         callback);
 });
 

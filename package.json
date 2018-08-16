@@ -16,6 +16,7 @@
     "devDependencies": {
         "browser-sync": "^2.24.6",
         "gulp": "^3.9.1",
+        "gulp-check-filesize": "^2.0.1",
         "gulp-clean-css": "^3.10.0",
         "gulp-concat": "^2.6.1",
         "gulp-html-replace": "^1.6.2",
@@ -23,6 +24,7 @@
         "gulp-rename": "^1.4.0",
         "gulp-rimraf": "^0.2.2",
         "gulp-terser": "^1.0.1",
+        "gulp-zip": "^4.2.0",
         "run-sequence": "^2.2.1"
     }
 }
