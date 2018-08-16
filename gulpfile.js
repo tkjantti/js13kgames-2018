@@ -5,10 +5,12 @@ const gulp = require('gulp');
 const browserSync = require('browser-sync');
 const replaceHTML = require('gulp-html-replace');
 const rename = require('gulp-rename');
+const deleteFiles = require('gulp-rimraf');
 const minifyHTML = require('gulp-minify-html');
 const minifyCSS = require('gulp-clean-css');
 const minifyJS = require('gulp-terser');
 const concat = require('gulp-concat');
+const runSequence = require('run-sequence');
 
 const paths = {
     src: {
@@ -23,6 +25,11 @@ const paths = {
         js: 'script.min.js',
     },
 };
+
+gulp.task('clean', () => {
+    return gulp.src('dist/*', { read: false })
+        .pipe(deleteFiles());
+});
 
 gulp.task('buildHTML', () => {
     return gulp.src(paths.src.html)
@@ -49,7 +56,12 @@ gulp.task('buildJS', () => {
         .pipe(gulp.dest(paths.dist.dir));
 });
 
-gulp.task('build', ['buildCSS', 'buildHTML', 'buildJS']);
+gulp.task('build', callback => {
+    runSequence(
+        'clean',
+        ['buildCSS', 'buildHTML', 'buildJS'],
+        callback);
+});
 
 gulp.task('browserSync', () => {
     browserSync({
