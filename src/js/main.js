@@ -5,26 +5,39 @@ kontra.init();
 
 function createItem(x, y) {
     return kontra.sprite({
+        type: 'item',
         x: x,
         y: y,
         color: 'green',
-        radius: 5,
+        width: 10,
+        height: 10,
 
-        render: function () {
-            this.context.strokeStyle = 'white';
-            this.context.beginPath();
-            this.context.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            this.context.stroke();
-        },
+        render(x, y) {
+            this.context.save();
+            this.context.fillStyle = this.color;
+            let xPos, yPos;
+            if (y) {
+                xPos = x;
+                yPos = y;
+            } else {
+                xPos = this.x;
+                yPos = this.y;
+            }
+            this.context.translate(xPos, yPos);
+            this.context.fillRect(0, 0, this.width, this.height);
+            this.context.restore();
+        }
     });
 }
 
 let player = kontra.sprite({
+    type: 'player',
     x: kontra.canvas.width / 2,
     y: kontra.canvas.height / 2,
     color: 'red',
     width: 20,
     height: 30,
+    items: [],
 
     update() {
         if (kontra.keys.pressed('left')) {
@@ -36,10 +49,60 @@ let player = kontra.sprite({
         } else if (kontra.keys.pressed('down')) {
             this.y += playerSpeed;
         }
+    },
+
+    render() {
+        this.context.fillStyle = this.color;
+        this.context.fillRect(this.x, this.y, this.width, this.height);
+
+        for (let i = 0; i < this.items.length; i++) {
+            let item = this.items[i];
+            item.render(this.x + this.width / 2 - item.width / 2, this.y - 5);
+        }
     }
 });
 
 let sprites = [ player, createItem(200, 200), createItem(320, 200) ];
+
+function getDistanceSquared(a, b) {
+    let xDist = Math.abs(a.x - b.x);
+    let yDist = Math.abs(a.y - b.y);
+    return (xDist * xDist) + (yDist * yDist);
+}
+
+function getDistance(a, b) {
+    return Math.sqrt(getDistanceSquared(a, b));
+}
+
+function findClosestOfType(self, type) {
+    let min = Infinity;
+    let closest = null;
+
+    for (let i = 0; i < sprites.length; i++) {
+        let other = sprites[i];
+
+        if (other.type === type) {
+            let distance = getDistanceSquared(self, other);
+            if (distance < min) {
+                min = distance;
+                closest = other;
+            }
+        }
+    }
+
+    return closest;
+}
+
+kontra.keys.bind('p', () => {
+    let item = findClosestOfType(player, 'item');
+
+    if (item && getDistance(player, item) < 40) {
+        item.isPickedUp = true;
+        item.x = 0;
+        item.y = 0;
+        player.items.push(item);
+    }
+});
 
 let loop = kontra.gameLoop({
     update: function() {
@@ -47,6 +110,8 @@ let loop = kontra.gameLoop({
             let sprite = sprites[i];
             sprite.update();
         }
+
+        sprites = sprites.filter(s => !s.isPickedUp);
     },
 
     render: function() {
