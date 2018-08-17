@@ -8,3 +8,7 @@ body {
     height: 480px;
     margin: auto;
 }
+
+canvas {
+    border: 1px solid white;
+}
