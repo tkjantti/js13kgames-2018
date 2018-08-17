@@ -1,28 +1,39 @@
 
 kontra.init();
 
-let sprite = kontra.sprite({
-  x: 100,        // starting x,y position of the sprite
-  y: 80,
-  color: 'red',  // fill color of the sprite rectangle
-  width: 20,     // width and height of the sprite rectangle
-  height: 40,
-  dx: 2          // move the sprite 2px to the right every frame
-});
+const playerSpeed = 3;
 
-let loop = kontra.gameLoop({  // create the main game loop
-  update: function() {        // update the game state
-    sprite.update();
+let player = kontra.sprite({
+    x: kontra.canvas.width / 2,
+    y: kontra.canvas.height / 2,
+    color: 'red',
+    width: 20,
+    height: 30,
 
-    // wrap the sprites position when it reaches
-    // the edge of the screen
-    if (sprite.x > kontra.canvas.width) {
-      sprite.x = -sprite.width;
+    update() {
+        if (kontra.keys.pressed('left')) {
+            this.x -= playerSpeed;
+        } else if (kontra.keys.pressed('right')) {
+            this.x += playerSpeed;
+        } else if (kontra.keys.pressed('up')) {
+            this.y -= playerSpeed;
+        } else if (kontra.keys.pressed('down')) {
+            this.y += playerSpeed;
+        }
     }
-  },
-  render: function() {        // render the game state
-    sprite.render();
-  }
 });
 
-loop.start();    // start the game
+let loop = kontra.gameLoop({
+    update: function() {
+        player.update();
+
+        if (player.x > kontra.canvas.width) {
+            player.x = -player.width;
+        }
+    },
+    render: function() {
+        player.render();
+    }
+});
+
+loop.start();
