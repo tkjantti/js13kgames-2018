@@ -4,7 +4,7 @@
         "ecmascript"
     ],
     "loadEagerly": [
-        "src/*.js"
+        "src/js/*.js"
     ],
     "dontLoad": [
         "node_modules/**"
