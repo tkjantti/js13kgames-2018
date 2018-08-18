@@ -3,6 +3,17 @@ const playerSpeed = 3;
 
 kontra.init();
 
+function createHomeBase(x, y) {
+    return kontra.sprite({
+        type: 'base',
+        x: x,
+        y: y,
+        color: 'blue',
+        width: 40,
+        height: 40,
+    });
+}
+
 function createItem(x, y) {
     return kontra.sprite({
         type: 'item',
@@ -66,7 +77,7 @@ let player = kontra.sprite({
     }
 });
 
-let sprites = [ player, createItem(200, 200), createItem(320, 200) ];
+let sprites = [ createHomeBase(300, 300), player, createItem(200, 200), createItem(320, 200) ];
 let spritesToBeAdded = [];
 
 function getDistanceSquared(a, b) {
@@ -115,7 +126,11 @@ function dropItem(player) {
         item.isPickedUp = false;
         item.x = player.x + player.width / 2 - item.width / 2;
         item.y = player.y + player.height - item.height;
-        spritesToBeAdded.push(item);
+
+        let droppingOnBase = sprites.some(s => s.type === 'base' && item.collidesWith(s));
+        if (!droppingOnBase) {
+            spritesToBeAdded.push(item);
+        }
     }
 }
 
