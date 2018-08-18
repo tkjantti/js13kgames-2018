@@ -19,12 +19,14 @@ const paths = {
         html: 'src/index.html',
         css: 'src/css/*.css',
         js: 'src/js/*.js',
+        images: 'src/images/**',
     },
     dist: {
         dir: 'dist',
         html: 'index.html',
-        css: 'style.min.css',
-        js: 'script.min.js',
+        css: 'css/style.min.css',
+        js: 'js/script.min.js',
+        images: 'dist/images',
     },
 };
 
@@ -63,6 +65,11 @@ gulp.task('buildJS', () => {
         .pipe(gulp.dest(paths.dist.dir));
 });
 
+gulp.task('copyImages', () => {
+    return gulp.src(paths.src.images)
+        .pipe(gulp.dest(paths.dist.images));
+});
+
 gulp.task('zip', () => {
     const limit = 13 * 1024;
 
@@ -75,7 +82,7 @@ gulp.task('zip', () => {
 gulp.task('build', callback => {
     runSequence(
         ['cleanDist', 'cleanZip'],
-        ['buildCSS', 'buildHTML', 'buildJS'],
+        ['buildCSS', 'buildHTML', 'buildJS', 'copyImages'],
         'zip',
         callback);
 });

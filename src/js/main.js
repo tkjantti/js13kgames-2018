@@ -90,6 +90,47 @@ let sprites = [];
 let spritesToBeAdded = [];
 let player;
 
+let tileEngine;
+
+function setupTileEngine(tileSheet) {
+    tileEngine = kontra.tileEngine({
+        tileWidth: 32,
+        tileHeight: 32,
+        width: 20,
+        height: 20,
+    });
+
+    tileEngine.addTilesets({
+        image: tileSheet
+    });
+
+    tileEngine.addLayers({
+        name: 'ground',
+        data: [
+            1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 1,
+            1, 1, 1, 4, 1, 1, 5, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 4,
+            1, 1, 1, 1, 1, 1, 5, 1, 4, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 4, 1, 1, 1, 5, 4, 1, 1, 1, 1, 6, 9, 9, 9, 9, 9, 9, 9,
+            1, 1, 1, 1, 1, 1, 5, 1, 1, 4, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 5, 1, 4, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 4, 1, 5, 1, 1, 1, 1, 1, 1, 1,
+            9, 9, 9, 9, 9, 9, 8, 9, 9, 9, 9, 9, 11,1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1,
+            1, 1, 4, 1, 1, 4, 5, 4, 1, 4, 1, 1, 1, 1, 4, 1, 4, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 5, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 4, 1, 4, 1, 1, 5, 1, 1, 1, 1, 1, 2, 3, 4, 1, 1, 4, 1, 1,
+            1, 1, 1, 4, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 4, 1, 1, 1, 5, 4, 1, 4, 1, 4, 1, 1, 1, 1, 4, 1, 4, 1,
+            1, 1, 1, 1, 1, 4, 5, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 4, 1, 4, 1, 1, 5, 1, 1, 4, 1, 1, 1, 1, 4, 1, 1, 4, 1, 1,
+            1, 1, 1, 1, 1, 1, 5, 1, 4, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 4, 1, 5, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 5, 1, 4, 1, 1, 4, 1, 4, 1, 1, 4, 1, 1, 1,
+            1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+        ],
+    });
+}
+
 function createMap() {
     sprites.push(createHomeBase(300, 300));
 
@@ -112,7 +153,7 @@ function addText(x, y, text, ttl) {
         type: 'text',
         x: x,
         y: y,
-        color: 'white',
+        color: 'black',
         text: text,
         ttl: ttl,
 
@@ -221,6 +262,8 @@ function createGameLoop() {
         },
 
         render() {
+            tileEngine.render();
+
             for (let i = 0; i < sprites.length; i++) {
                 let sprite = sprites[i];
                 sprite.render();
@@ -231,11 +274,17 @@ function createGameLoop() {
 
 function main() {
     kontra.init();
-    createMap();
-    bindKeys();
-    addInfoText("Collect items in order!");
-    const loop = createGameLoop();
-    loop.start();
+    kontra.assets.load('../images/tilesheet.png')
+        .then(() => {
+            setupTileEngine(kontra.assets.images['../images/tilesheet']);
+            createMap();
+            bindKeys();
+            addInfoText("Collect items in order!");
+            const loop = createGameLoop();
+            loop.start();
+        }).catch(error => {
+            console.log(error); // jshint ignore:line
+        });
 }
 
 main();
