@@ -1,7 +1,6 @@
 
 const playerSpeed = 3;
-
-kontra.init();
+const numberOfItemsToCollect = 3;
 
 function createHomeBase(x, y) {
     return kontra.sprite({
@@ -48,58 +47,65 @@ function createItem(x, y, number) {
     });
 }
 
-let player = kontra.sprite({
-    type: 'player',
-    x: kontra.canvas.width / 2,
-    y: kontra.canvas.height / 2,
-    color: 'red',
-    width: 20,
-    height: 30,
-    items: [],
-    ttl: Infinity,
+function createPlayer(x, y) {
+    return kontra.sprite({
+        type: 'player',
+        x: x,
+        y: y,
+        color: 'red',
+        width: 20,
+        height: 30,
+        items: [],
+        ttl: Infinity,
 
-    hasItem() {
-        return this.items.length > 0;
-    },
+        hasItem() {
+            return this.items.length > 0;
+        },
 
-    update() {
-        if (kontra.keys.pressed('left')) {
-            this.x -= playerSpeed;
-        } else if (kontra.keys.pressed('right')) {
-            this.x += playerSpeed;
-        } else if (kontra.keys.pressed('up')) {
-            this.y -= playerSpeed;
-        } else if (kontra.keys.pressed('down')) {
-            this.y += playerSpeed;
+        update() {
+            if (kontra.keys.pressed('left')) {
+                this.x -= playerSpeed;
+            } else if (kontra.keys.pressed('right')) {
+                this.x += playerSpeed;
+            } else if (kontra.keys.pressed('up')) {
+                this.y -= playerSpeed;
+            } else if (kontra.keys.pressed('down')) {
+                this.y += playerSpeed;
+            }
+        },
+
+        render() {
+            this.context.fillStyle = this.color;
+            this.context.fillRect(this.x, this.y, this.width, this.height);
+
+            for (let i = 0; i < this.items.length; i++) {
+                let item = this.items[i];
+                item.render(this.x + this.width / 2 - item.width / 2, this.y - 5);
+            }
         }
-    },
+    });
+}
 
-    render() {
-        this.context.fillStyle = this.color;
-        this.context.fillRect(this.x, this.y, this.width, this.height);
-
-        for (let i = 0; i < this.items.length; i++) {
-            let item = this.items[i];
-            item.render(this.x + this.width / 2 - item.width / 2, this.y - 5);
-        }
-    }
-});
-
-let sprites = [ createHomeBase(300, 300), player ];
+let sprites = [];
 let spritesToBeAdded = [];
+let player;
 
-const numberOfItemsToCollect = 3;
+function createMap() {
+    sprites.push(createHomeBase(300, 300));
 
-for (let i = 1; i <= numberOfItemsToCollect; i++) {
-    let item = createItem(
-        40 + Math.random() * (kontra.canvas.width - 2*40),
-        40 + Math.random() * (kontra.canvas.height - 2*40),
-        i);
-    sprites.push(item);
+    player = createPlayer(kontra.canvas.width / 2, kontra.canvas.height / 2);
+    sprites.push(player);
+
+    for (let i = 1; i <= numberOfItemsToCollect; i++) {
+        let item = createItem(
+            40 + Math.random() * (kontra.canvas.width - 2*40),
+            40 + Math.random() * (kontra.canvas.height - 2*40),
+            i);
+        sprites.push(item);
+    }
 }
 
 let nextItemNumberToCollect = 1;
-
 
 function addText(x, y, text, ttl) {
     let textSprite = kontra.sprite({
@@ -188,37 +194,48 @@ function dropItem(player) {
     }
 }
 
-kontra.keys.bind('space', () => {
-    if (player.hasItem()) {
-        dropItem(player);
-    } else {
-        pickUpItem(player);
-    }
-});
-
-addInfoText("Collect items in order!");
-
-let loop = kontra.gameLoop({
-    update: function() {
-        for (let i = 0; i < sprites.length; i++) {
-            let sprite = sprites[i];
-            sprite.update();
+function bindKeys() {
+    kontra.keys.bind('space', () => {
+        if (player.hasItem()) {
+            dropItem(player);
+        } else {
+            pickUpItem(player);
         }
+    });
+}
 
-        sprites = sprites.filter(s => !s.isPickedUp && s.isAlive());
+function createGameLoop() {
+    return kontra.gameLoop({
+        update() {
+            for (let i = 0; i < sprites.length; i++) {
+                let sprite = sprites[i];
+                sprite.update();
+            }
 
-        while (spritesToBeAdded.length > 0) {
-            let s = spritesToBeAdded.shift();
-            sprites.push(s);
+            sprites = sprites.filter(s => !s.isPickedUp && s.isAlive());
+
+            while (spritesToBeAdded.length > 0) {
+                let s = spritesToBeAdded.shift();
+                sprites.push(s);
+            }
+        },
+
+        render() {
+            for (let i = 0; i < sprites.length; i++) {
+                let sprite = sprites[i];
+                sprite.render();
+            }
         }
-    },
+    });
+}
 
-    render: function() {
-        for (let i = 0; i < sprites.length; i++) {
-            let sprite = sprites[i];
-            sprite.render();
-        }
-    }
-});
+function main() {
+    kontra.init();
+    createMap();
+    bindKeys();
+    addInfoText("Collect items in order!");
+    const loop = createGameLoop();
+    loop.start();
+}
 
-loop.start();
+main();
