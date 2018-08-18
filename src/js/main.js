@@ -2,18 +2,6 @@
 const playerSpeed = 3;
 const numberOfItemsToCollect = 3;
 
-function createHomeBase(x, y) {
-    return kontra.sprite({
-        type: 'base',
-        x: x,
-        y: y,
-        color: 'blue',
-        width: 40,
-        height: 40,
-        ttl: Infinity,
-    });
-}
-
 function createItem(x, y, number) {
     return kontra.sprite({
         type: 'item',
@@ -90,6 +78,8 @@ let sprites = [];
 let spritesToBeAdded = [];
 let player;
 
+const TILE_BASE = 13;
+
 let tileEngine;
 
 function setupTileEngine(tileSheet) {
@@ -116,7 +106,7 @@ function setupTileEngine(tileSheet) {
             1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 4, 1, 5, 1, 1, 1, 1, 1, 1, 1,
             9, 9, 9, 9, 9, 9, 8, 9, 9, 9, 9, 9, 11,1, 1, 1, 1, 1, 1, 1,
             1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1,
-            1, 1, 4, 1, 1, 4, 5, 4, 1, 4, 1, 1, 1, 1, 4, 1, 4, 1, 1, 1,
+            1, 1, 4, 1, 1, 4, 5, 4, 1, 4, 1, 1, 13,1, 4, 1, 4, 1, 1, 1,
             1, 1, 1, 1, 1, 1, 5, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 4, 1, 4, 1, 1, 5, 1, 1, 1, 1, 1, 2, 3, 4, 1, 1, 4, 1, 1,
             1, 1, 1, 4, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -132,8 +122,6 @@ function setupTileEngine(tileSheet) {
 }
 
 function createMap() {
-    sprites.push(createHomeBase(300, 300));
-
     player = createPlayer(kontra.canvas.width / 2, kontra.canvas.height / 2);
     sprites.push(player);
 
@@ -219,8 +207,13 @@ function dropItem(player) {
         item.x = player.x + player.width / 2 - item.width / 2;
         item.y = player.y + player.height - item.height;
 
-        let droppingOnBase = sprites.some(s => s.type === 'base' && item.collidesWith(s));
-        if (! droppingOnBase) {
+        let tile = tileEngine.tileAtLayer(
+            'ground',
+            {
+                x: item.x + item.width / 2,
+                y: item.y + item.height,
+            });
+        if (tile !== TILE_BASE) {
             spritesToBeAdded.push(item);
         } else if (item.number !== nextItemNumberToCollect) {
             addText(item.x + 20, item.y, `Next item is ${nextItemNumberToCollect}!`, 100);
