@@ -11,21 +11,23 @@ function createHomeBase(x, y) {
         color: 'blue',
         width: 40,
         height: 40,
+        ttl: Infinity,
     });
 }
 
-function createItem(x, y) {
+function createItem(x, y, number) {
     return kontra.sprite({
         type: 'item',
         x: x,
         y: y,
-        color: 'green',
-        width: 10,
-        height: 10,
+        number: number,
+        color: '#004400',
+        width: 15,
+        height: 15,
+        ttl: Infinity,
 
         render(x, y) {
             this.context.save();
-            this.context.fillStyle = this.color;
             let xPos, yPos;
             if (y) {
                 xPos = x;
@@ -35,7 +37,12 @@ function createItem(x, y) {
                 yPos = this.y;
             }
             this.context.translate(xPos, yPos);
+            this.context.fillStyle = this.color;
             this.context.fillRect(0, 0, this.width, this.height);
+            this.context.fillStyle = 'white';
+            this.context.textBaseline = "top";
+            this.context.font = "12px Sans-serif";
+            this.context.fillText(this.number.toString(), this.width * 0.3, this.height * 0.25);
             this.context.restore();
         }
     });
@@ -49,6 +56,7 @@ let player = kontra.sprite({
     width: 20,
     height: 30,
     items: [],
+    ttl: Infinity,
 
     hasItem() {
         return this.items.length > 0;
@@ -77,8 +85,45 @@ let player = kontra.sprite({
     }
 });
 
-let sprites = [ createHomeBase(300, 300), player, createItem(200, 200), createItem(320, 200) ];
+let sprites = [ createHomeBase(300, 300), player ];
 let spritesToBeAdded = [];
+
+const numberOfItemsToCollect = 3;
+
+for (let i = 1; i <= numberOfItemsToCollect; i++) {
+    let item = createItem(
+        40 + Math.random() * (kontra.canvas.width - 2*40),
+        40 + Math.random() * (kontra.canvas.height - 2*40),
+        i);
+    sprites.push(item);
+}
+
+let nextItemNumberToCollect = 1;
+
+
+function addText(x, y, text, ttl) {
+    let textSprite = kontra.sprite({
+        type: 'text',
+        x: x,
+        y: y,
+        color: 'white',
+        text: text,
+        ttl: ttl,
+
+        render() {
+            this.context.fillStyle = this.color;
+            this.context.font = "16px Sans-serif";
+            this.context.textBaseline = "top";
+            this.context.fillText(this.text, this.x, this.y);
+
+        }
+    });
+    spritesToBeAdded.push(textSprite);
+}
+
+function addInfoText(text) {
+    addText(kontra.canvas.width * 0.4, kontra.canvas.height * 0.25, text, 200);
+}
 
 function getDistanceSquared(a, b) {
     let xDist = Math.abs(a.x - b.x);
@@ -128,8 +173,17 @@ function dropItem(player) {
         item.y = player.y + player.height - item.height;
 
         let droppingOnBase = sprites.some(s => s.type === 'base' && item.collidesWith(s));
-        if (!droppingOnBase) {
+        if (! droppingOnBase) {
             spritesToBeAdded.push(item);
+        } else if (item.number !== nextItemNumberToCollect) {
+            addText(item.x + 20, item.y, `Next item is ${nextItemNumberToCollect}!`, 100);
+            spritesToBeAdded.push(item);
+        } else {
+            nextItemNumberToCollect++;
+
+            if (nextItemNumberToCollect > numberOfItemsToCollect) {
+                addInfoText("YOU WIN");
+            }
         }
     }
 }
@@ -142,6 +196,8 @@ kontra.keys.bind('space', () => {
     }
 });
 
+addInfoText("Collect items in order!");
+
 let loop = kontra.gameLoop({
     update: function() {
         for (let i = 0; i < sprites.length; i++) {
@@ -149,7 +205,7 @@ let loop = kontra.gameLoop({
             sprite.update();
         }
 
-        sprites = sprites.filter(s => !s.isPickedUp);
+        sprites = sprites.filter(s => !s.isPickedUp && s.isAlive());
 
         while (spritesToBeAdded.length > 0) {
             let s = spritesToBeAdded.shift();
