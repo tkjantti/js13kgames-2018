@@ -39,6 +39,10 @@ let player = kontra.sprite({
     height: 30,
     items: [],
 
+    hasItem() {
+        return this.items.length > 0;
+    },
+
     update() {
         if (kontra.keys.pressed('left')) {
             this.x -= playerSpeed;
@@ -63,6 +67,7 @@ let player = kontra.sprite({
 });
 
 let sprites = [ player, createItem(200, 200), createItem(320, 200) ];
+let spritesToBeAdded = [];
 
 function getDistanceSquared(a, b) {
     let xDist = Math.abs(a.x - b.x);
@@ -93,7 +98,7 @@ function findClosestOfType(self, type) {
     return closest;
 }
 
-kontra.keys.bind('p', () => {
+function pickUpItem(player) {
     let item = findClosestOfType(player, 'item');
 
     if (item && getDistance(player, item) < 40) {
@@ -101,6 +106,24 @@ kontra.keys.bind('p', () => {
         item.x = 0;
         item.y = 0;
         player.items.push(item);
+    }
+}
+
+function dropItem(player) {
+    if (player.hasItem()) {
+        let item = player.items.pop();
+        item.isPickedUp = false;
+        item.x = player.x + player.width / 2 - item.width / 2;
+        item.y = player.y + player.height - item.height;
+        spritesToBeAdded.push(item);
+    }
+}
+
+kontra.keys.bind('space', () => {
+    if (player.hasItem()) {
+        dropItem(player);
+    } else {
+        pickUpItem(player);
     }
 });
 
@@ -112,6 +135,11 @@ let loop = kontra.gameLoop({
         }
 
         sprites = sprites.filter(s => !s.isPickedUp);
+
+        while (spritesToBeAdded.length > 0) {
+            let s = spritesToBeAdded.shift();
+            sprites.push(s);
+        }
     },
 
     render: function() {
