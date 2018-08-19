@@ -45,21 +45,67 @@ function createPlayer(x, y) {
         height: 30,
         items: [],
         ttl: Infinity,
+        keyState: {
+            left: false,
+            right: false,
+            up: false,
+            down: false,
+        },
+        movingHorizontal: false,
 
         hasItem() {
             return this.items.length > 0;
         },
 
         update() {
-            if (kontra.keys.pressed('left')) {
-                this.x -= playerSpeed;
-            } else if (kontra.keys.pressed('right')) {
-                this.x += playerSpeed;
-            } else if (kontra.keys.pressed('up')) {
-                this.y -= playerSpeed;
-            } else if (kontra.keys.pressed('down')) {
-                this.y += playerSpeed;
+            let oldKeyState = this.keyState;
+            let newKeyState = {
+                left: kontra.keys.pressed('left'),
+                right: kontra.keys.pressed('right'),
+                up: kontra.keys.pressed('up'),
+                down: kontra.keys.pressed('down'),
+            };
+
+            let leftJustPressed = !oldKeyState.left && newKeyState.left;
+            let rightJustPressed = !oldKeyState.right && newKeyState.right;
+            let horizontalJustPressed = leftJustPressed || rightJustPressed;
+
+            let upJustPressed = !oldKeyState.up && newKeyState.up;
+            let downJustPressed = !oldKeyState.down && newKeyState.down;
+            let verticalJustPressed = upJustPressed || downJustPressed;
+
+            if (horizontalJustPressed) {
+                this.movingHorizontal = true;
+            } else if (verticalJustPressed) {
+                this.movingHorizontal = false;
             }
+
+            let dx = 0, dy = 0;
+            if (newKeyState.left) {
+                dx = -playerSpeed;
+            } else if (newKeyState.right) {
+                dx = playerSpeed;
+            }
+
+            if (newKeyState.up) {
+                dy = -playerSpeed;
+            } else if (newKeyState.down) {
+                dy = playerSpeed;
+            }
+
+            if (dx && dy) {
+                if (this.movingHorizontal) {
+                    this.x += dx;
+                } else {
+                    this.y += dy;
+                }
+            } else if (dx) {
+                this.x += dx;
+            } else if (dy) {
+                this.y += dy;
+            }
+
+            this.keyState = newKeyState;
         },
 
         render() {
