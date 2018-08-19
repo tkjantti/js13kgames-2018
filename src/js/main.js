@@ -57,7 +57,7 @@ function createPlayer(x, y) {
             return this.items.length > 0;
         },
 
-        update() {
+        getMovement() {
             let oldKeyState = this.keyState;
             let newKeyState = {
                 left: kontra.keys.pressed('left'),
@@ -65,6 +65,7 @@ function createPlayer(x, y) {
                 up: kontra.keys.pressed('up'),
                 down: kontra.keys.pressed('down'),
             };
+            this.keyState = newKeyState;
 
             let leftJustPressed = !oldKeyState.left && newKeyState.left;
             let rightJustPressed = !oldKeyState.right && newKeyState.right;
@@ -95,17 +96,17 @@ function createPlayer(x, y) {
 
             if (dx && dy) {
                 if (this.movingHorizontal) {
-                    this.x += dx;
+                    return { x: dx, y: 0 };
                 } else {
-                    this.y += dy;
+                    return { x: 0, y: dy };
                 }
             } else if (dx) {
-                this.x += dx;
+                return { x: dx, y: 0 };
             } else if (dy) {
-                this.y += dy;
+                return { x: 0, y: dy };
             }
 
-            this.keyState = newKeyState;
+            return { x: 0, y: 0 };
         },
 
         render() {
@@ -314,14 +315,39 @@ function adjustCamera() {
     }
 }
 
+function move(sprite, movement) {
+    if (movement.x) {
+        let isWithinLeftBorder = (movement.x < 0) && (sprite.x > 0);
+        let isWithinRightBorder = movement.x > 0 &&
+            (sprite.x + sprite.width) < tileEngine.mapWidth;
+        if (isWithinLeftBorder || isWithinRightBorder) {
+            sprite.x += movement.x;
+        }
+    }
+    if (movement.y) {
+        let isWithinTopBorder = (movement.y < 0) && (sprite.y > 0);
+        let isWithinBottomBorder = movement.y > 0 &&
+            (sprite.y + sprite.height) < tileEngine.mapHeight;
+        if (isWithinTopBorder || isWithinBottomBorder) {
+            sprite.y += movement.y;
+        }
+    }
+}
+
 function createGameLoop() {
     return kontra.gameLoop({
         update() {
             for (let i = 0; i < sprites.length; i++) {
                 let sprite = sprites[i];
                 sprite.update();
+                if (sprite.getMovement) {
+                    let movement = sprite.getMovement();
+                    move(sprite, movement);
+                }
             }
+
             adjustCamera();
+
             for (let i = 0; i < uiSprites.length; i++) {
                 let sprite = uiSprites[i];
                 sprite.update();
