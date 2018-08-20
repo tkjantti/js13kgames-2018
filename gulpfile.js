@@ -91,7 +91,8 @@ gulp.task('browserSync', () => {
     browserSync({
         server: {
             baseDir: 'src'
-        }
+        },
+        open: false,
     });
 });
 
