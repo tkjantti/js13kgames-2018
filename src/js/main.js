@@ -187,6 +187,14 @@ const groundLayer = [
     1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 ];
 
+function keepWithinMap(sprite) {
+    sprite.position.clamp(
+        0,
+        0,
+        tileEngine.mapWidth - sprite.width,
+        tileEngine.mapHeight - sprite.height);
+}
+
 function createMap() {
     tileEngine = kontra.tileEngine({
         tileWidth: TILE_WIDTH,
@@ -205,6 +213,7 @@ function createMap() {
     });
 
     player = createPlayer(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2);
+    keepWithinMap(player);
     sprites.push(player);
 
     for (let i = 1; i <= numberOfItemsToCollect; i++) {
@@ -212,6 +221,7 @@ function createMap() {
             40 + Math.random() * (tileEngine.mapWidth - 2*40),
             40 + Math.random() * (tileEngine.mapHeight - 2*40),
             i);
+        keepWithinMap(item);
         sprites.push(item);
     }
 
@@ -220,6 +230,7 @@ function createMap() {
             40 + Math.random() * (tileEngine.mapWidth - 2*40),
             40 + Math.random() * (tileEngine.mapHeight - 2*40)
         );
+        keepWithinMap(ghost);
         sprites.push(ghost);
     }
 }
@@ -356,20 +367,10 @@ function adjustCamera() {
 
 function move(sprite, movement) {
     if (movement.x) {
-        let isWithinLeftBorder = (movement.x < 0) && (sprite.x > 0);
-        let isWithinRightBorder = movement.x > 0 &&
-            (sprite.x + sprite.width) < tileEngine.mapWidth;
-        if (isWithinLeftBorder || isWithinRightBorder) {
-            sprite.x += movement.x;
-        }
+        sprite.x += movement.x;
     }
     if (movement.y) {
-        let isWithinTopBorder = (movement.y < 0) && (sprite.y > 0);
-        let isWithinBottomBorder = movement.y > 0 &&
-            (sprite.y + sprite.height) < tileEngine.mapHeight;
-        if (isWithinTopBorder || isWithinBottomBorder) {
-            sprite.y += movement.y;
-        }
+        sprite.y += movement.y;
     }
 }
 
