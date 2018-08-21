@@ -8,6 +8,13 @@ const TILE_HEIGHT = 32;
 const tileSheetImage = '../images/tilesheet.png';
 
 let ghostSpriteSheet;
+let tileEngine;
+
+function getRandomPosition(margin = 40) {
+    let x = margin + Math.random() * (tileEngine.mapWidth - 2 * margin);
+    let y = margin + Math.random() * (tileEngine.mapHeight - 2 * margin);
+    return kontra.vector(x, y);
+}
 
 function createAnimations() {
     ghostSpriteSheet = kontra.spriteSheet({
@@ -22,11 +29,10 @@ function createAnimations() {
     });
 }
 
-function createItem(x, y, number) {
+function createItem(position, number) {
     return kontra.sprite({
         type: 'item',
-        x: x,
-        y: y,
+        position: position,
         number: number,
         color: '#004400',
         width: 15,
@@ -55,24 +61,27 @@ function createItem(x, y, number) {
     });
 }
 
-function createGhost(x, y) {
+function createGhost(position) {
     return kontra.sprite({
         type: 'ghost',
-        x: x,
-        y: y,
+        position: position,
         width: TILE_WIDTH,
         height: TILE_HEIGHT,
         color: 'blue',
         animations: ghostSpriteSheet.animations,
         ttl: Infinity,
+
+        update() {
+            this.x += Math.random() - 0.5;
+            this.y += Math.random() - 0.5;
+        }
     });
 }
 
-function createPlayer(x, y) {
+function createPlayer(position) {
     return kontra.sprite({
         type: 'player',
-        x: x,
-        y: y,
+        position: position,
         color: 'red',
         width: 20,
         height: 30,
@@ -124,8 +133,6 @@ let player;
 
 const TILE_BASE = 13;
 
-let tileEngine;
-
 const groundLayer = [
     1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 4, 1, 1, 5, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 4, 1, 4, 4,
@@ -174,24 +181,18 @@ function createMap() {
         data: groundLayer,
     });
 
-    player = createPlayer(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2);
+    player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
     keepWithinMap(player);
     sprites.push(player);
 
     for (let i = 1; i <= numberOfItemsToCollect; i++) {
-        let item = createItem(
-            40 + Math.random() * (tileEngine.mapWidth - 2*40),
-            40 + Math.random() * (tileEngine.mapHeight - 2*40),
-            i);
+        let item = createItem(getRandomPosition(), i);
         keepWithinMap(item);
         sprites.push(item);
     }
 
     for (let i = 0; i < 5; i++) {
-        let ghost = createGhost(
-            40 + Math.random() * (tileEngine.mapWidth - 2*40),
-            40 + Math.random() * (tileEngine.mapHeight - 2*40)
-        );
+        let ghost = createGhost(getRandomPosition());
         keepWithinMap(ghost);
         sprites.push(ghost);
     }
