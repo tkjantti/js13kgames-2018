@@ -10,6 +10,22 @@ const tileSheetImage = '../images/tilesheet.png';
 let ghostSpriteSheet;
 let tileEngine;
 
+kontra.vector.prototype.minus = function (v) {
+    return kontra.vector(this.x - v.x, this.y - v.y);
+};
+
+kontra.vector.prototype.magnitude = function() {
+  return Math.sqrt(this.x * this.x + this.y * this.y);
+};
+
+kontra.vector.prototype.normalized = function () {
+    let length = this.magnitude();
+    if (length === 0.0) {
+        return kontra.vector(0, 0);
+    }
+    return kontra.vector(this.x / length, this.y / length);
+};
+
 function getRandomPosition(margin = 40) {
     let x = margin + Math.random() * (tileEngine.mapWidth - 2 * margin);
     let y = margin + Math.random() * (tileEngine.mapHeight - 2 * margin);
@@ -72,8 +88,8 @@ function createGhost(position) {
         ttl: Infinity,
 
         update() {
-            this.x += Math.random() - 0.5;
-            this.y += Math.random() - 0.5;
+            let playerDirection = player.position.minus(this.position).normalized();
+            this.position.add(playerDirection);
         }
     });
 }
