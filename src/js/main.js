@@ -2,6 +2,26 @@
 const playerSpeed = 3;
 const numberOfItemsToCollect = 3;
 
+const TILE_WIDTH = 32;
+const TILE_HEIGHT = 32;
+
+const tileSheetImage = '../images/tilesheet.png';
+
+let ghostSpriteSheet;
+
+function createAnimations() {
+    ghostSpriteSheet = kontra.spriteSheet({
+        image: kontra.assets.images[tileSheetImage],
+        frameWidth: TILE_WIDTH,
+        frameHeight: TILE_HEIGHT,
+        animations: {
+            idle: {
+                frames: 15
+            }
+        }
+    });
+}
+
 function createItem(x, y, number) {
     return kontra.sprite({
         type: 'item',
@@ -32,6 +52,19 @@ function createItem(x, y, number) {
             this.context.fillText(this.number.toString(), this.width * 0.3, this.height * 0.25);
             this.context.restore();
         }
+    });
+}
+
+function createGhost(x, y) {
+    return kontra.sprite({
+        type: 'ghost',
+        x: x,
+        y: y,
+        width: TILE_WIDTH,
+        height: TILE_HEIGHT,
+        color: 'blue',
+        animations: ghostSpriteSheet.animations,
+        ttl: Infinity,
     });
 }
 
@@ -131,8 +164,6 @@ const TILE_BASE = 13;
 
 let tileEngine;
 
-const tileSheetImage = '../images/tilesheet.png';
-
 const groundLayer = [
     1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 4, 1, 1, 5, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 4, 1, 4, 4,
@@ -158,8 +189,8 @@ const groundLayer = [
 
 function createMap() {
     tileEngine = kontra.tileEngine({
-        tileWidth: 32,
-        tileHeight: 32,
+        tileWidth: TILE_WIDTH,
+        tileHeight: TILE_HEIGHT,
         width: 26,
         height: 20,
     });
@@ -182,6 +213,14 @@ function createMap() {
             40 + Math.random() * (tileEngine.mapHeight - 2*40),
             i);
         sprites.push(item);
+    }
+
+    for (let i = 0; i < 5; i++) {
+        let ghost = createGhost(
+            40 + Math.random() * (tileEngine.mapWidth - 2*40),
+            40 + Math.random() * (tileEngine.mapHeight - 2*40)
+        );
+        sprites.push(ghost);
     }
 }
 
@@ -334,6 +373,16 @@ function move(sprite, movement) {
     }
 }
 
+function checkCollisions() {
+    for (let i = 0; i < sprites.length; i++) {
+        let sprite = sprites[i];
+
+        if (sprite.type === 'ghost' && player.collidesWith(sprite)) {
+            player.ttl = 0;
+        }
+    }
+}
+
 function createGameLoop() {
     return kontra.gameLoop({
         update() {
@@ -345,6 +394,8 @@ function createGameLoop() {
                     move(sprite, movement);
                 }
             }
+
+            checkCollisions();
 
             adjustCamera();
 
@@ -389,6 +440,7 @@ function main() {
     kontra.init();
     kontra.assets.load(tileSheetImage)
         .then(() => {
+            createAnimations();
             createMap();
             bindKeys();
             addInfoText("Collect items in order!");
