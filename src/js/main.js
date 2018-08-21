@@ -1,5 +1,5 @@
 
-const playerSpeed = 3;
+const playerSpeed = 2;
 const numberOfItemsToCollect = 3;
 
 const TILE_WIDTH = 32;
@@ -90,56 +90,18 @@ function createPlayer(x, y) {
             return this.items.length > 0;
         },
 
-        getMovement() {
-            let oldKeyState = this.keyState;
-            let newKeyState = {
-                left: kontra.keys.pressed('left'),
-                right: kontra.keys.pressed('right'),
-                up: kontra.keys.pressed('up'),
-                down: kontra.keys.pressed('down'),
-            };
-            this.keyState = newKeyState;
-
-            let leftJustPressed = !oldKeyState.left && newKeyState.left;
-            let rightJustPressed = !oldKeyState.right && newKeyState.right;
-            let horizontalJustPressed = leftJustPressed || rightJustPressed;
-
-            let upJustPressed = !oldKeyState.up && newKeyState.up;
-            let downJustPressed = !oldKeyState.down && newKeyState.down;
-            let verticalJustPressed = upJustPressed || downJustPressed;
-
-            if (horizontalJustPressed) {
-                this.movingHorizontal = true;
-            } else if (verticalJustPressed) {
-                this.movingHorizontal = false;
+        update() {
+            if (kontra.keys.pressed('left')) {
+                this.x -= playerSpeed;
+            } else if (kontra.keys.pressed('right')) {
+                this.x += playerSpeed;
             }
 
-            let dx = 0, dy = 0;
-            if (newKeyState.left) {
-                dx = -playerSpeed;
-            } else if (newKeyState.right) {
-                dx = playerSpeed;
+            if (kontra.keys.pressed('up')) {
+                this.y -= playerSpeed;
+            } else if (kontra.keys.pressed('down')) {
+                this.y += playerSpeed;
             }
-
-            if (newKeyState.up) {
-                dy = -playerSpeed;
-            } else if (newKeyState.down) {
-                dy = playerSpeed;
-            }
-
-            if (dx && dy) {
-                if (this.movingHorizontal) {
-                    return { x: dx, y: 0 };
-                } else {
-                    return { x: 0, y: dy };
-                }
-            } else if (dx) {
-                return { x: dx, y: 0 };
-            } else if (dy) {
-                return { x: 0, y: dy };
-            }
-
-            return { x: 0, y: 0 };
         },
 
         render() {
@@ -365,15 +327,6 @@ function adjustCamera() {
     }
 }
 
-function move(sprite, movement) {
-    if (movement.x) {
-        sprite.x += movement.x;
-    }
-    if (movement.y) {
-        sprite.y += movement.y;
-    }
-}
-
 function checkCollisions() {
     for (let i = 0; i < sprites.length; i++) {
         let sprite = sprites[i];
@@ -390,10 +343,6 @@ function createGameLoop() {
             for (let i = 0; i < sprites.length; i++) {
                 let sprite = sprites[i];
                 sprite.update();
-                if (sprite.getMovement) {
-                    let movement = sprite.getMovement();
-                    move(sprite, movement);
-                }
             }
 
             checkCollisions();
