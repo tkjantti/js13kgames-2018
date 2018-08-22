@@ -319,10 +319,12 @@ function dropItem(player) {
 
 function bindKeys() {
     kontra.keys.bind('space', () => {
-        if (player.hasItem()) {
-            dropItem(player);
-        } else {
-            pickUpItem(player);
+        if (player.isAlive()) {
+            if (player.hasItem()) {
+                dropItem(player);
+            } else {
+                pickUpItem(player);
+            }
         }
     });
 }
