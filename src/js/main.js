@@ -1,12 +1,58 @@
 
-const playerSpeed = 3;
+const playerSpeed = 2;
 const numberOfItemsToCollect = 3;
 
-function createItem(x, y, number) {
+const TILE_WIDTH = 32;
+const TILE_HEIGHT = 32;
+
+const tileSheetImage = '../images/tilesheet.png';
+
+let ghostSpriteSheet;
+let tileEngine;
+
+kontra.vector.prototype.minus = function (v) {
+    return kontra.vector(this.x - v.x, this.y - v.y);
+};
+
+kontra.vector.prototype.magnitude = function() {
+  return Math.sqrt(this.x * this.x + this.y * this.y);
+};
+
+function getDistance(a, b) {
+    return a.minus(b).magnitude();
+}
+
+kontra.vector.prototype.normalized = function () {
+    let length = this.magnitude();
+    if (length === 0.0) {
+        return kontra.vector(0, 0);
+    }
+    return kontra.vector(this.x / length, this.y / length);
+};
+
+function getRandomPosition(margin = 40) {
+    let x = margin + Math.random() * (tileEngine.mapWidth - 2 * margin);
+    let y = margin + Math.random() * (tileEngine.mapHeight - 2 * margin);
+    return kontra.vector(x, y);
+}
+
+function createAnimations() {
+    ghostSpriteSheet = kontra.spriteSheet({
+        image: kontra.assets.images[tileSheetImage],
+        frameWidth: TILE_WIDTH,
+        frameHeight: TILE_HEIGHT,
+        animations: {
+            idle: {
+                frames: 15
+            }
+        }
+    });
+}
+
+function createItem(position, number) {
     return kontra.sprite({
         type: 'item',
-        x: x,
-        y: y,
+        position: position,
         number: number,
         color: '#004400',
         width: 15,
@@ -35,11 +81,27 @@ function createItem(x, y, number) {
     });
 }
 
-function createPlayer(x, y) {
+function createGhost(position) {
+    return kontra.sprite({
+        type: 'ghost',
+        position: position,
+        width: TILE_WIDTH,
+        height: TILE_HEIGHT,
+        color: 'blue',
+        animations: ghostSpriteSheet.animations,
+        ttl: Infinity,
+
+        update() {
+            let playerDirection = player.position.minus(this.position).normalized();
+            this.position.add(playerDirection);
+        }
+    });
+}
+
+function createPlayer(position) {
     return kontra.sprite({
         type: 'player',
-        x: x,
-        y: y,
+        position: position,
         color: 'red',
         width: 20,
         height: 30,
@@ -57,56 +119,18 @@ function createPlayer(x, y) {
             return this.items.length > 0;
         },
 
-        getMovement() {
-            let oldKeyState = this.keyState;
-            let newKeyState = {
-                left: kontra.keys.pressed('left'),
-                right: kontra.keys.pressed('right'),
-                up: kontra.keys.pressed('up'),
-                down: kontra.keys.pressed('down'),
-            };
-            this.keyState = newKeyState;
-
-            let leftJustPressed = !oldKeyState.left && newKeyState.left;
-            let rightJustPressed = !oldKeyState.right && newKeyState.right;
-            let horizontalJustPressed = leftJustPressed || rightJustPressed;
-
-            let upJustPressed = !oldKeyState.up && newKeyState.up;
-            let downJustPressed = !oldKeyState.down && newKeyState.down;
-            let verticalJustPressed = upJustPressed || downJustPressed;
-
-            if (horizontalJustPressed) {
-                this.movingHorizontal = true;
-            } else if (verticalJustPressed) {
-                this.movingHorizontal = false;
+        update() {
+            if (kontra.keys.pressed('left')) {
+                this.x -= playerSpeed;
+            } else if (kontra.keys.pressed('right')) {
+                this.x += playerSpeed;
             }
 
-            let dx = 0, dy = 0;
-            if (newKeyState.left) {
-                dx = -playerSpeed;
-            } else if (newKeyState.right) {
-                dx = playerSpeed;
+            if (kontra.keys.pressed('up')) {
+                this.y -= playerSpeed;
+            } else if (kontra.keys.pressed('down')) {
+                this.y += playerSpeed;
             }
-
-            if (newKeyState.up) {
-                dy = -playerSpeed;
-            } else if (newKeyState.down) {
-                dy = playerSpeed;
-            }
-
-            if (dx && dy) {
-                if (this.movingHorizontal) {
-                    return { x: dx, y: 0 };
-                } else {
-                    return { x: 0, y: dy };
-                }
-            } else if (dx) {
-                return { x: dx, y: 0 };
-            } else if (dy) {
-                return { x: 0, y: dy };
-            }
-
-            return { x: 0, y: 0 };
         },
 
         render() {
@@ -128,10 +152,6 @@ let spritesToBeAdded = [];
 let player;
 
 const TILE_BASE = 13;
-
-let tileEngine;
-
-const tileSheetImage = '../images/tilesheet.png';
 
 const groundLayer = [
     1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 1, 1, 1, 1, 1, 1, 1,
@@ -156,10 +176,29 @@ const groundLayer = [
     1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 ];
 
+function keepWithinMap(sprite) {
+    sprite.position.clamp(
+        0,
+        0,
+        tileEngine.mapWidth - sprite.width,
+        tileEngine.mapHeight - sprite.height);
+}
+
+function getStartingPosition() {
+    for (let i = 0; i < 20; i++) {
+        let pos = getRandomPosition();
+        if (sprites.every(s => getDistance(pos, s.position) > 100)) { // jshint ignore:line
+            return pos;
+        }
+    }
+
+    return null;
+}
+
 function createMap() {
     tileEngine = kontra.tileEngine({
-        tileWidth: 32,
-        tileHeight: 32,
+        tileWidth: TILE_WIDTH,
+        tileHeight: TILE_HEIGHT,
         width: 26,
         height: 20,
     });
@@ -173,15 +212,26 @@ function createMap() {
         data: groundLayer,
     });
 
-    player = createPlayer(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2);
+    player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
+    keepWithinMap(player);
     sprites.push(player);
 
     for (let i = 1; i <= numberOfItemsToCollect; i++) {
-        let item = createItem(
-            40 + Math.random() * (tileEngine.mapWidth - 2*40),
-            40 + Math.random() * (tileEngine.mapHeight - 2*40),
-            i);
-        sprites.push(item);
+        let pos = getStartingPosition();
+        if (pos) {
+            let item = createItem(pos, i);
+            keepWithinMap(item);
+            sprites.push(item);
+        }
+    }
+
+    for (let i = 0; i < 5; i++) {
+        var pos = getStartingPosition();
+        if (pos) {
+            let ghost = createGhost(pos);
+            keepWithinMap(ghost);
+            sprites.push(ghost);
+        }
     }
 }
 
@@ -216,16 +266,6 @@ function addInfoText(text) {
     uiSpritesToAdd.push(textSprite);
 }
 
-function getDistanceSquared(a, b) {
-    let xDist = Math.abs(a.x - b.x);
-    let yDist = Math.abs(a.y - b.y);
-    return (xDist * xDist) + (yDist * yDist);
-}
-
-function getDistance(a, b) {
-    return Math.sqrt(getDistanceSquared(a, b));
-}
-
 function findClosestOfType(self, type) {
     let min = Infinity;
     let closest = null;
@@ -234,7 +274,7 @@ function findClosestOfType(self, type) {
         let other = sprites[i];
 
         if (other.type === type) {
-            let distance = getDistanceSquared(self, other);
+            let distance = getDistance(self.position, other.position);
             if (distance < min) {
                 min = distance;
                 closest = other;
@@ -248,7 +288,7 @@ function findClosestOfType(self, type) {
 function pickUpItem(player) {
     let item = findClosestOfType(player, 'item');
 
-    if (item && getDistance(player, item) < 40) {
+    if (item && getDistance(player.position, item.position) < 40) {
         item.isPickedUp = true;
         item.x = 0;
         item.y = 0;
@@ -290,10 +330,12 @@ function dropItem(player) {
 
 function bindKeys() {
     kontra.keys.bind('space', () => {
-        if (player.hasItem()) {
-            dropItem(player);
-        } else {
-            pickUpItem(player);
+        if (player.isAlive()) {
+            if (player.hasItem()) {
+                dropItem(player);
+            } else {
+                pickUpItem(player);
+            }
         }
     });
 }
@@ -315,21 +357,12 @@ function adjustCamera() {
     }
 }
 
-function move(sprite, movement) {
-    if (movement.x) {
-        let isWithinLeftBorder = (movement.x < 0) && (sprite.x > 0);
-        let isWithinRightBorder = movement.x > 0 &&
-            (sprite.x + sprite.width) < tileEngine.mapWidth;
-        if (isWithinLeftBorder || isWithinRightBorder) {
-            sprite.x += movement.x;
-        }
-    }
-    if (movement.y) {
-        let isWithinTopBorder = (movement.y < 0) && (sprite.y > 0);
-        let isWithinBottomBorder = movement.y > 0 &&
-            (sprite.y + sprite.height) < tileEngine.mapHeight;
-        if (isWithinTopBorder || isWithinBottomBorder) {
-            sprite.y += movement.y;
+function checkCollisions() {
+    for (let i = 0; i < sprites.length; i++) {
+        let sprite = sprites[i];
+
+        if (sprite.type === 'ghost' && player.collidesWith(sprite)) {
+            player.ttl = 0;
         }
     }
 }
@@ -340,11 +373,9 @@ function createGameLoop() {
             for (let i = 0; i < sprites.length; i++) {
                 let sprite = sprites[i];
                 sprite.update();
-                if (sprite.getMovement) {
-                    let movement = sprite.getMovement();
-                    move(sprite, movement);
-                }
             }
+
+            checkCollisions();
 
             adjustCamera();
 
@@ -389,6 +420,7 @@ function main() {
     kontra.init();
     kontra.assets.load(tileSheetImage)
         .then(() => {
+            createAnimations();
             createMap();
             bindKeys();
             addInfoText("Collect items in order!");
