@@ -5,10 +5,41 @@ const numberOfItemsToCollect = 3;
 const TILE_WIDTH = 32;
 const TILE_HEIGHT = 32;
 
+const TILE_BASE = 2;
+
 const tileSheetImage = '../images/tilesheet.png';
 
-let ghostSpriteSheet;
+const groundLayer = [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 2, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1,
+    1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1,
+    1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1,
+    1, 1, 1, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1,
+    1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+];
+
 let tileEngine;
+
+let uiSprites = [];
+let uiSpritesToAdd = [];
+let sprites = [];
+let spritesToBeAdded = [];
+
+let player;
 
 kontra.vector.prototype.minus = function (v) {
     return kontra.vector(this.x - v.x, this.y - v.y);
@@ -34,19 +65,6 @@ function getRandomPosition(margin = 40) {
     let x = margin + Math.random() * (tileEngine.mapWidth - 2 * margin);
     let y = margin + Math.random() * (tileEngine.mapHeight - 2 * margin);
     return kontra.vector(x, y);
-}
-
-function createAnimations() {
-    ghostSpriteSheet = kontra.spriteSheet({
-        image: kontra.assets.images[tileSheetImage],
-        frameWidth: TILE_WIDTH,
-        frameHeight: TILE_HEIGHT,
-        animations: {
-            idle: {
-                frames: 15
-            }
-        }
-    });
 }
 
 function createItem(position, number) {
@@ -88,7 +106,6 @@ function createGhost(position) {
         width: TILE_WIDTH,
         height: TILE_HEIGHT,
         color: 'blue',
-        animations: ghostSpriteSheet.animations,
         ttl: Infinity,
 
         update() {
@@ -144,37 +161,6 @@ function createPlayer(position) {
         }
     });
 }
-
-let uiSprites = [];
-let uiSpritesToAdd = [];
-let sprites = [];
-let spritesToBeAdded = [];
-let player;
-
-const TILE_BASE = 13;
-
-const groundLayer = [
-    1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 4, 1, 1, 5, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 4, 1, 4, 4, 1, 4, 4,
-    1, 1, 1, 1, 1, 1, 5, 1, 4, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 4, 1, 1, 1, 5, 4, 1, 1, 1, 1, 6, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-    1, 1, 1, 1, 1, 1, 5, 1, 1, 4, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 5, 1, 4, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 4, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    9, 9, 9, 9, 9, 9, 8, 9, 9, 9, 9, 9, 11,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1,
-    1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 4, 1, 1, 4, 5, 4, 1, 4, 1, 1, 13,1, 4, 1, 4, 1, 1, 1, 1, 1, 1, 1, 4, 1,
-    1, 1, 1, 1, 1, 1, 5, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 4, 1, 4, 1, 1, 5, 1, 1, 1, 1, 1, 2, 3, 4, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 4, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
-    1, 1, 4, 1, 1, 1, 5, 4, 1, 4, 1, 4, 1, 1, 1, 1, 4, 1, 4, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 4, 5, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4,
-    1, 4, 1, 4, 1, 1, 5, 1, 1, 4, 1, 1, 1, 1, 4, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 5, 1, 4, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 4, 1, 5, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1, 4, 1,
-    1, 1, 1, 1, 1, 1, 5, 1, 4, 1, 1, 4, 1, 4, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-];
 
 function keepWithinMap(sprite) {
     sprite.position.clamp(
@@ -242,7 +228,7 @@ function createText(x, y, text, ttl) {
         type: 'text',
         x: x,
         y: y,
-        color: 'black',
+        color: 'white',
         text: text,
         ttl: ttl,
 
@@ -420,7 +406,6 @@ function main() {
     kontra.init();
     kontra.assets.load(tileSheetImage)
         .then(() => {
-            createAnimations();
             createMap();
             bindKeys();
             addInfoText("Collect items in order!");
