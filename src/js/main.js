@@ -18,6 +18,10 @@ kontra.vector.prototype.magnitude = function() {
   return Math.sqrt(this.x * this.x + this.y * this.y);
 };
 
+function getDistance(a, b) {
+    return a.minus(b).magnitude();
+}
+
 kontra.vector.prototype.normalized = function () {
     let length = this.magnitude();
     if (length === 0.0) {
@@ -180,6 +184,17 @@ function keepWithinMap(sprite) {
         tileEngine.mapHeight - sprite.height);
 }
 
+function getStartingPosition() {
+    for (let i = 0; i < 20; i++) {
+        let pos = getRandomPosition();
+        if (sprites.every(s => getDistance(pos, s.position) > 100)) { // jshint ignore:line
+            return pos;
+        }
+    }
+
+    return null;
+}
+
 function createMap() {
     tileEngine = kontra.tileEngine({
         tileWidth: TILE_WIDTH,
@@ -202,15 +217,21 @@ function createMap() {
     sprites.push(player);
 
     for (let i = 1; i <= numberOfItemsToCollect; i++) {
-        let item = createItem(getRandomPosition(), i);
-        keepWithinMap(item);
-        sprites.push(item);
+        let pos = getStartingPosition();
+        if (pos) {
+            let item = createItem(pos, i);
+            keepWithinMap(item);
+            sprites.push(item);
+        }
     }
 
     for (let i = 0; i < 5; i++) {
-        let ghost = createGhost(getRandomPosition());
-        keepWithinMap(ghost);
-        sprites.push(ghost);
+        var pos = getStartingPosition();
+        if (pos) {
+            let ghost = createGhost(pos);
+            keepWithinMap(ghost);
+            sprites.push(ghost);
+        }
     }
 }
 
@@ -245,16 +266,6 @@ function addInfoText(text) {
     uiSpritesToAdd.push(textSprite);
 }
 
-function getDistanceSquared(a, b) {
-    let xDist = Math.abs(a.x - b.x);
-    let yDist = Math.abs(a.y - b.y);
-    return (xDist * xDist) + (yDist * yDist);
-}
-
-function getDistance(a, b) {
-    return Math.sqrt(getDistanceSquared(a, b));
-}
-
 function findClosestOfType(self, type) {
     let min = Infinity;
     let closest = null;
@@ -263,7 +274,7 @@ function findClosestOfType(self, type) {
         let other = sprites[i];
 
         if (other.type === type) {
-            let distance = getDistanceSquared(self, other);
+            let distance = getDistance(self.position, other.position);
             if (distance < min) {
                 min = distance;
                 closest = other;
@@ -277,7 +288,7 @@ function findClosestOfType(self, type) {
 function pickUpItem(player) {
     let item = findClosestOfType(player, 'item');
 
-    if (item && getDistance(player, item) < 40) {
+    if (item && getDistance(player.position, item.position) < 40) {
         item.isPickedUp = true;
         item.x = 0;
         item.y = 0;
