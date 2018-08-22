@@ -105,12 +105,33 @@ function createGhost(position) {
         position: position,
         width: TILE_WIDTH,
         height: TILE_HEIGHT,
-        color: 'blue',
+        color: 'red',
         ttl: Infinity,
 
         update() {
             let playerDirection = player.position.minus(this.position).normalized();
             this.position.add(playerDirection);
+        },
+
+        render() {
+            let w = this.width, h = this.height, cx = this.context;
+
+            cx.save();
+            cx.translate(this.x, this.y);
+
+            cx.fillStyle = this.color;
+            cx.fillRect(0, h/2, this.width, h/2);
+
+            cx.beginPath();
+            cx.arc(w/2, h/2, w/2, 0, 2 * Math.PI);
+            cx.fill();
+
+            cx.fillStyle = 'black';
+            cx.beginPath();
+            cx.arc(w*0.3, h/2, w*0.15, 0, 2 * Math.PI);
+            cx.arc(w*0.7, h/2, w*0.15, 0, 2 * Math.PI);
+            cx.fill();
+            cx.restore();
         }
     });
 }
@@ -119,7 +140,7 @@ function createPlayer(position) {
     return kontra.sprite({
         type: 'player',
         position: position,
-        color: 'red',
+        color: 'green',
         width: 20,
         height: 30,
         items: [],
