@@ -7,6 +7,8 @@ const TILE_HEIGHT = 32;
 
 const TILE_BASE = 2;
 
+const DIR_NONE = 0, DIR_WEST = 1, DIR_EAST = 2, DIR_NORTH = 3, DIR_SOUTH = 4;
+
 const tileSheetImage = '../images/tilesheet.png';
 
 const groundLayer = [
@@ -41,6 +43,10 @@ let spritesToBeAdded = [];
 
 let player;
 
+function getRandomInt(max) {
+    return Math.floor(Math.random() * Math.floor(max));
+}
+
 kontra.vector.prototype.minus = function (v) {
     return kontra.vector(this.x - v.x, this.y - v.y);
 };
@@ -61,14 +67,43 @@ kontra.vector.prototype.normalized = function () {
     return kontra.vector(this.x / length, this.y / length);
 };
 
+kontra.vector.prototype.addDir = function (dir, magnitude) {
+    switch (dir) {
+    case DIR_WEST:
+        this.x -= magnitude;
+        break;
+    case DIR_EAST:
+        this.x += magnitude;
+        break;
+    case DIR_NORTH:
+        this.y -= magnitude;
+        break;
+    case DIR_SOUTH:
+        this.y += magnitude;
+        break;
+    case DIR_NONE:
+        break;
+    default:
+        break;
+    }
+};
+
 function getRandomPosition(margin = 40) {
     let x = margin + Math.random() * (tileEngine.mapWidth - 2 * margin);
     let y = margin + Math.random() * (tileEngine.mapHeight - 2 * margin);
     return kontra.vector(x, y);
 }
 
+function keepWithinMap(sprite) {
+    sprite.position.clamp(
+        0,
+        0,
+        tileEngine.mapWidth - sprite.width,
+        tileEngine.mapHeight - sprite.height);
+}
+
 function createItem(position, number) {
-    return kontra.sprite({
+    let result = kontra.sprite({
         type: 'item',
         position: position,
         number: number,
@@ -97,20 +132,33 @@ function createItem(position, number) {
             this.context.restore();
         }
     });
+
+    keepWithinMap(result);
+    return result;
 }
 
 function createGhost(position) {
-    return kontra.sprite({
+    let result = kontra.sprite({
         type: 'ghost',
         position: position,
         width: TILE_WIDTH,
         height: TILE_HEIGHT,
         color: 'red',
         ttl: Infinity,
+        dir: getRandomInt(5),
 
         update() {
-            let playerDirection = player.position.minus(this.position).normalized();
-            this.position.add(playerDirection);
+            let playerPosition = player.position;
+            let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
+            let distance = getDistance(this.position, attackTarget);
+            if (distance < 300) {
+                if (distance > 140) {
+                    // Adds some variance to how the ghosts approach the player.
+                    attackTarget.addDir(this.dir, 130);
+                }
+                let attackDirection = attackTarget.minus(this.position).normalized();
+                this.position.add(attackDirection);
+            }
         },
 
         render() {
@@ -134,10 +182,13 @@ function createGhost(position) {
             cx.restore();
         }
     });
+
+    keepWithinMap(result);
+    return result;
 }
 
 function createPlayer(position) {
-    return kontra.sprite({
+    let result = kontra.sprite({
         type: 'player',
         position: position,
         color: 'green',
@@ -181,14 +232,9 @@ function createPlayer(position) {
             }
         }
     });
-}
 
-function keepWithinMap(sprite) {
-    sprite.position.clamp(
-        0,
-        0,
-        tileEngine.mapWidth - sprite.width,
-        tileEngine.mapHeight - sprite.height);
+    keepWithinMap(result);
+    return result;
 }
 
 function getStartingPosition() {
@@ -220,14 +266,12 @@ function createMap() {
     });
 
     player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
-    keepWithinMap(player);
     sprites.push(player);
 
     for (let i = 1; i <= numberOfItemsToCollect; i++) {
         let pos = getStartingPosition();
         if (pos) {
             let item = createItem(pos, i);
-            keepWithinMap(item);
             sprites.push(item);
         }
     }
@@ -236,7 +280,6 @@ function createMap() {
         var pos = getStartingPosition();
         if (pos) {
             let ghost = createGhost(pos);
-            keepWithinMap(ghost);
             sprites.push(ghost);
         }
     }
