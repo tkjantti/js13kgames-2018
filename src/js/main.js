@@ -96,6 +96,16 @@ function getRandomPosition(margin = 40) {
     return kontra.vector(x, y);
 }
 
+function collidesWithBlocker(sprite) {
+    let cameraCoordinateBounds = {
+        x: -tileEngine.sx + sprite.x,
+        y: -tileEngine.sy + sprite.y,
+        width: sprite.width,
+        height: sprite.height
+    };
+    return tileEngine.layerCollidesWith('blockers', cameraCoordinateBounds);
+}
+
 function keepWithinMap(sprite) {
     sprite.position.clamp(
         0,
@@ -159,7 +169,16 @@ function createGhost(position) {
                     attackTarget.addDir(this.dir, 130);
                 }
                 let attackDirection = attackTarget.minus(this.position).normalized();
-                this.position.add(attackDirection);
+
+                let newBounds = {
+                    x: this.x + attackDirection.x,
+                    y: this.y + attackDirection.y,
+                    width: this.width,
+                    height: this.height,
+                };
+                if (!collidesWithBlocker(newBounds)) {
+                    this.position.add(attackDirection);
+                }
             }
         },
 
