@@ -1,5 +1,7 @@
 
-const playerSpeed = 2;
+const playerSpeed = 1.5;
+const diagonalSpeedCoefficient = 0.707;
+
 const numberOfItemsToCollect = 3;
 
 const TILE_WIDTH = 32;
@@ -193,7 +195,7 @@ function createGhost(position) {
                 let playerPosition = player.position;
                 let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
                 let distance = getDistance(this.position, attackTarget);
-                if (distance < 300) {
+                if (distance < 200) {
                     if (distance > 140) {
                         // Adds some variance to how the ghosts approach the player.
                         attackTarget.addDir(this.dir, 130);
@@ -276,17 +278,27 @@ function createPlayer(position) {
         },
 
         update() {
+            let xDiff = 0, yDiff = 0;
+
             if (kontra.keys.pressed('left')) {
-                this.x -= playerSpeed;
+                xDiff = -playerSpeed;
             } else if (kontra.keys.pressed('right')) {
-                this.x += playerSpeed;
+                xDiff = playerSpeed;
             }
 
             if (kontra.keys.pressed('up')) {
-                this.y -= playerSpeed;
+                yDiff = -playerSpeed;
             } else if (kontra.keys.pressed('down')) {
-                this.y += playerSpeed;
+                yDiff = playerSpeed;
             }
+
+            if (xDiff !== 0 && yDiff !== 0) {
+                xDiff *= diagonalSpeedCoefficient;
+                yDiff *= diagonalSpeedCoefficient;
+            }
+
+            this.x += xDiff;
+            this.y += yDiff;
         },
 
         render() {
