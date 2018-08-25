@@ -2,7 +2,7 @@
 const playerSpeed = 1.5;
 const diagonalSpeedCoefficient = 0.707;
 
-const numberOfItemsToCollect = 3;
+const artifactCount = 3;
 
 const TILE_WIDTH = 32;
 const TILE_HEIGHT = 32;
@@ -44,6 +44,8 @@ let uiSprites = [];
 let uiSpritesToAdd = [];
 let sprites = [];
 let spritesToBeAdded = [];
+
+let numberOfArtifactsCollected = 0;
 
 let player;
 
@@ -125,7 +127,7 @@ function keepWithinMap(sprite) {
         tileEngine.mapHeight - sprite.height);
 }
 
-function createItem(position, number) {
+function createArtifact(position, number) {
     let result = kontra.sprite({
         type: 'item',
         position: position,
@@ -350,10 +352,10 @@ function createMap() {
     player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
     sprites.push(player);
 
-    for (let i = 1; i <= numberOfItemsToCollect; i++) {
+    for (let i = 1; i <= artifactCount; i++) {
         let pos = getStartingPosition();
         if (pos) {
-            let item = createItem(pos, i);
+            let item = createArtifact(pos, i);
             sprites.push(item);
         }
     }
@@ -366,8 +368,6 @@ function createMap() {
         }
     }
 }
-
-let nextItemNumberToCollect = 1;
 
 function createText(x, y, text, ttl) {
     return kontra.sprite({
@@ -386,11 +386,6 @@ function createText(x, y, text, ttl) {
 
         }
     });
-}
-
-function addText(x, y, text, ttl) {
-    let textSprite = createText(x, y, text, ttl);
-    spritesToBeAdded.push(textSprite);
 }
 
 function addInfoText(text) {
@@ -447,13 +442,10 @@ function dropItem(player) {
 
         if (! isOnGroundTile(item, TILE_BASE)) {
             spritesToBeAdded.push(item);
-        } else if (item.number !== nextItemNumberToCollect) {
-            addText(item.x + 20, item.y, `Next item is ${nextItemNumberToCollect}!`, 100);
-            spritesToBeAdded.push(item);
         } else {
-            nextItemNumberToCollect++;
+            numberOfArtifactsCollected++;
 
-            if (nextItemNumberToCollect > numberOfItemsToCollect) {
+            if (numberOfArtifactsCollected >= artifactCount) {
                 addInfoText("YOU WIN");
             }
         }
@@ -554,7 +546,7 @@ function main() {
         .then(() => {
             createMap();
             bindKeys();
-            addInfoText("Collect items in order!");
+            addInfoText("Collect all artifacts!");
             const loop = createGameLoop();
             loop.start();
         }).catch(error => {
