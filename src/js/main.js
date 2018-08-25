@@ -171,6 +171,17 @@ function createGhost(position) {
         update() {
             let movement;
 
+            if (collidesWithBlocker(this)) {
+                this.color = 'yellow';
+                let randomDirection = kontra.vector(
+                    (-0.5 + Math.random()) * 20,
+                    (-0.5 + Math.random()) * 20);
+                this.position.add(randomDirection);
+                return;
+            } else if (this.color !== 'red') {
+                this.color = 'red';
+            }
+
             if (this._target) {
                 if (1000 < performance.now() - this._targetBegin) {
                     this._target = null;
