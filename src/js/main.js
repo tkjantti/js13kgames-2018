@@ -5,13 +5,15 @@ const numberOfItemsToCollect = 3;
 const TILE_WIDTH = 32;
 const TILE_HEIGHT = 32;
 
+const TILE_GROUND = 1;
 const TILE_BASE = 2;
+const TILE_BLOCKER = 4;
 
 const DIR_NONE = 0, DIR_WEST = 1, DIR_EAST = 2, DIR_NORTH = 3, DIR_SOUTH = 4;
 
 const tileSheetImage = '../images/tilesheet.png';
 
-const groundLayer = [
+const map =  [
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -260,10 +262,13 @@ function createMap() {
         image: kontra.assets.images[tileSheetImage],
     });
 
-    tileEngine.addLayers({
+    tileEngine.addLayers([{
         name: 'ground',
-        data: groundLayer,
-    });
+        data: map.map(tile => tile === TILE_BLOCKER ? TILE_GROUND : tile),
+    }, {
+        name: 'blockers',
+        data: map.map(tile => tile === TILE_BLOCKER ? TILE_BLOCKER : 0),
+    }]);
 
     player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
     sprites.push(player);
