@@ -189,7 +189,7 @@ function createGhost(position) {
                 } else {
                     movement = this._target.minus(this.position).normalized();
                 }
-            } else {
+            } else if (player.isAlive()) {
                 let playerPosition = player.position;
                 let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
                 let distance = getDistance(this.position, attackTarget);
