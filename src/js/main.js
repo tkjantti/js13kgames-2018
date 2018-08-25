@@ -13,6 +13,15 @@ const TILE_BLOCKER = 4;
 
 const DIR_NONE = 0, DIR_WEST = 1, DIR_EAST = 2, DIR_NORTH = 3, DIR_SOUTH = 4;
 
+const artifactColors = [
+    '#FFFF00',
+    '#FF00FF',
+    '#00FFFF',
+    '#FF0000',
+    '#00FF00',
+    '#0000FF',
+];
+
 const tileSheetImage = '../images/tilesheet.png';
 
 const map =  [
@@ -134,14 +143,18 @@ function createArtifact(position, number) {
         type: 'item',
         position: position,
         number: number,
-        color: '#004400',
-        width: 15,
-        height: 15,
+        color: artifactColors[number % artifactColors.length],
+        width: 20,
+        height: 20,
         ttl: Infinity,
 
         render(x, y) {
-            this.context.save();
+            let cx = this.context;
+            let w = this.width, h = this.height;
             let xPos, yPos;
+
+            cx.save();
+
             if (y) {
                 xPos = x;
                 yPos = y;
@@ -149,14 +162,21 @@ function createArtifact(position, number) {
                 xPos = this.x;
                 yPos = this.y;
             }
-            this.context.translate(xPos, yPos);
-            this.context.fillStyle = this.color;
-            this.context.fillRect(0, 0, this.width, this.height);
-            this.context.fillStyle = 'white';
-            this.context.textBaseline = "top";
-            this.context.font = "12px Sans-serif";
-            this.context.fillText(this.number.toString(), this.width * 0.3, this.height * 0.25);
-            this.context.restore();
+            cx.translate(xPos, yPos);
+
+            cx.fillStyle = 'black';
+            cx.strokeStyle = this.color;
+            cx.lineWidth = 3;
+
+            cx.beginPath();
+            cx.moveTo(0, h);
+            cx.lineTo(w/2, 0);
+            cx.lineTo(w, h);
+            cx.closePath();
+            cx.fill();
+            cx.stroke();
+
+            cx.restore();
         }
     });
 
@@ -357,7 +377,7 @@ function createMap() {
     player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
     sprites.push(player);
 
-    for (let i = 1; i <= artifactCount; i++) {
+    for (let i = 0; i < artifactCount; i++) {
         let pos = getStartingPosition();
         if (pos) {
             let artifact = createArtifact(pos, i);
