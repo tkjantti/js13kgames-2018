@@ -5,13 +5,15 @@ const numberOfItemsToCollect = 3;
 const TILE_WIDTH = 32;
 const TILE_HEIGHT = 32;
 
+const TILE_GROUND = 1;
 const TILE_BASE = 2;
+const TILE_BLOCKER = 4;
 
 const DIR_NONE = 0, DIR_WEST = 1, DIR_EAST = 2, DIR_NORTH = 3, DIR_SOUTH = 4;
 
 const tileSheetImage = '../images/tilesheet.png';
 
-const groundLayer = [
+const map =  [
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -59,6 +61,15 @@ function getDistance(a, b) {
     return a.minus(b).magnitude();
 }
 
+function getMovementBetween(spriteFrom, spriteTo) {
+    let fromX = spriteFrom.x + spriteFrom.width / 2;
+    let fromY = spriteFrom.y + spriteFrom.height / 2;
+    let toX = spriteTo.x + spriteTo.width / 2;
+    let toY = spriteTo.y + spriteTo.height / 2;
+
+    return kontra.vector(toX - fromX, toY - fromY);
+}
+
 kontra.vector.prototype.normalized = function () {
     let length = this.magnitude();
     if (length === 0.0) {
@@ -92,6 +103,16 @@ function getRandomPosition(margin = 40) {
     let x = margin + Math.random() * (tileEngine.mapWidth - 2 * margin);
     let y = margin + Math.random() * (tileEngine.mapHeight - 2 * margin);
     return kontra.vector(x, y);
+}
+
+function collidesWithBlocker(sprite) {
+    let cameraCoordinateBounds = {
+        x: -tileEngine.sx + sprite.x,
+        y: -tileEngine.sy + sprite.y,
+        width: sprite.width,
+        height: sprite.height
+    };
+    return tileEngine.layerCollidesWith('blockers', cameraCoordinateBounds);
 }
 
 function keepWithinMap(sprite) {
@@ -148,16 +169,69 @@ function createGhost(position) {
         dir: getRandomInt(5),
 
         update() {
-            let playerPosition = player.position;
-            let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
-            let distance = getDistance(this.position, attackTarget);
-            if (distance < 300) {
-                if (distance > 140) {
-                    // Adds some variance to how the ghosts approach the player.
-                    attackTarget.addDir(this.dir, 130);
+            let movement;
+
+            if (collidesWithBlocker(this)) {
+                this.color = 'yellow';
+                let randomDirection = kontra.vector(
+                    (-0.5 + Math.random()) * 20,
+                    (-0.5 + Math.random()) * 20);
+                this.position.add(randomDirection);
+                return;
+            } else if (this.color !== 'red') {
+                this.color = 'red';
+            }
+
+            if (this._target) {
+                if (1000 < performance.now() - this._targetBegin) {
+                    this._target = null;
+                    this._targetBegin = null;
+                } else {
+                    movement = this._target.minus(this.position).normalized();
                 }
-                let attackDirection = attackTarget.minus(this.position).normalized();
-                this.position.add(attackDirection);
+            } else if (player.isAlive()) {
+                let playerPosition = player.position;
+                let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
+                let distance = getDistance(this.position, attackTarget);
+                if (distance < 300) {
+                    if (distance > 140) {
+                        // Adds some variance to how the ghosts approach the player.
+                        attackTarget.addDir(this.dir, 130);
+                    }
+                    movement = getMovementBetween(this, player).normalized();
+                }
+            }
+
+            if (movement) {
+                let newBounds = {
+                    x: this.x + movement.x,
+                    y: this.y + movement.y,
+                    width: this.width,
+                    height: this.height,
+                };
+
+                if (!collidesWithBlocker(newBounds)) {
+                    this.position.add(movement);
+                } else {
+                    let newTarget = kontra.vector(this.x, this.y);
+
+                    // Back off a little.
+                    newTarget.x -= movement.x * 5;
+                    newTarget.y -= movement.y * 5;
+
+                    let toPlayer = getMovementBetween(this, player);
+                    let dodgeHorizontally = Math.abs(toPlayer.x) < Math.abs(toPlayer.y);
+                    let dodgeAmount = 50;
+
+                    if (dodgeHorizontally) {
+                        newTarget.x += (Math.random() >= 0.5) ? dodgeAmount : -dodgeAmount;
+                    } else {
+                        newTarget.y += (Math.random() >= 0.5) ? dodgeAmount : -dodgeAmount;
+                    }
+
+                    this._target = newTarget;
+                    this._targetBegin = performance.now();
+                }
             }
         },
 
@@ -196,13 +270,6 @@ function createPlayer(position) {
         height: 30,
         items: [],
         ttl: Infinity,
-        keyState: {
-            left: false,
-            right: false,
-            up: false,
-            down: false,
-        },
-        movingHorizontal: false,
 
         hasItem() {
             return this.items.length > 0;
@@ -260,10 +327,13 @@ function createMap() {
         image: kontra.assets.images[tileSheetImage],
     });
 
-    tileEngine.addLayers({
+    tileEngine.addLayers([{
         name: 'ground',
-        data: groundLayer,
-    });
+        data: map.map(tile => tile === TILE_BLOCKER ? TILE_GROUND : tile),
+    }, {
+        name: 'blockers',
+        data: map.map(tile => tile === TILE_BLOCKER ? TILE_BLOCKER : 0),
+    }]);
 
     player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
     sprites.push(player);
