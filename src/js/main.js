@@ -2,7 +2,7 @@
 const playerSpeed = 1.5;
 const diagonalSpeedCoefficient = 0.707;
 
-const numberOfItemsToCollect = 3;
+const artifactCount = 3;
 
 const TILE_WIDTH = 32;
 const TILE_HEIGHT = 32;
@@ -13,16 +13,25 @@ const TILE_BLOCKER = 4;
 
 const DIR_NONE = 0, DIR_WEST = 1, DIR_EAST = 2, DIR_NORTH = 3, DIR_SOUTH = 4;
 
+const artifactColors = [
+    '#FFFF00',
+    '#FF00FF',
+    '#00FFFF',
+    '#FF0000',
+    '#00FF00',
+    '#0000FF',
+];
+
 const tileSheetImage = '../images/tilesheet.png';
 
 const map =  [
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 2, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 2, 2, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 4, 2, 2, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 4, 4, 1, 1,
     1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1,
     1, 1, 1, 1, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -45,7 +54,11 @@ let uiSpritesToAdd = [];
 let sprites = [];
 let spritesToBeAdded = [];
 
+let artifacts = [];
+
 let player;
+
+let levelDone = false;
 
 function getRandomInt(max) {
     return Math.floor(Math.random() * Math.floor(max));
@@ -107,14 +120,14 @@ function getRandomPosition(margin = 40) {
     return kontra.vector(x, y);
 }
 
-function collidesWithBlocker(sprite) {
+function collidesWithLayer(sprite, layer) {
     let cameraCoordinateBounds = {
         x: -tileEngine.sx + sprite.x,
         y: -tileEngine.sy + sprite.y,
         width: sprite.width,
         height: sprite.height
     };
-    return tileEngine.layerCollidesWith('blockers', cameraCoordinateBounds);
+    return tileEngine.layerCollidesWith(layer, cameraCoordinateBounds);
 }
 
 function keepWithinMap(sprite) {
@@ -125,19 +138,23 @@ function keepWithinMap(sprite) {
         tileEngine.mapHeight - sprite.height);
 }
 
-function createItem(position, number) {
+function createArtifact(position, number) {
     let result = kontra.sprite({
         type: 'item',
         position: position,
         number: number,
-        color: '#004400',
-        width: 15,
-        height: 15,
+        color: artifactColors[number % artifactColors.length],
+        width: 20,
+        height: 20,
         ttl: Infinity,
 
         render(x, y) {
-            this.context.save();
+            let cx = this.context;
+            let w = this.width, h = this.height;
             let xPos, yPos;
+
+            cx.save();
+
             if (y) {
                 xPos = x;
                 yPos = y;
@@ -145,14 +162,21 @@ function createItem(position, number) {
                 xPos = this.x;
                 yPos = this.y;
             }
-            this.context.translate(xPos, yPos);
-            this.context.fillStyle = this.color;
-            this.context.fillRect(0, 0, this.width, this.height);
-            this.context.fillStyle = 'white';
-            this.context.textBaseline = "top";
-            this.context.font = "12px Sans-serif";
-            this.context.fillText(this.number.toString(), this.width * 0.3, this.height * 0.25);
-            this.context.restore();
+            cx.translate(xPos, yPos);
+
+            cx.fillStyle = collidesWithLayer(this, 'bases') ? this.color : 'black';
+            cx.strokeStyle = this.color;
+            cx.lineWidth = 3;
+
+            cx.beginPath();
+            cx.moveTo(0, h);
+            cx.lineTo(w/2, 0);
+            cx.lineTo(w, h);
+            cx.closePath();
+            cx.fill();
+            cx.stroke();
+
+            cx.restore();
         }
     });
 
@@ -173,7 +197,7 @@ function createGhost(position) {
         update() {
             let movement;
 
-            if (collidesWithBlocker(this)) {
+            if (collidesWithLayer(this, 'blockers')) {
                 this.color = 'yellow';
                 let randomDirection = kontra.vector(
                     (-0.5 + Math.random()) * 20,
@@ -212,7 +236,7 @@ function createGhost(position) {
                     height: this.height,
                 };
 
-                if (!collidesWithBlocker(newBounds)) {
+                if (!collidesWithLayer(newBounds, 'blockers')) {
                     this.position.add(movement);
                 } else {
                     let newTarget = kontra.vector(this.x, this.y);
@@ -341,20 +365,24 @@ function createMap() {
 
     tileEngine.addLayers([{
         name: 'ground',
-        data: map.map(tile => tile === TILE_BLOCKER ? TILE_GROUND : tile),
+        data: map.map(tile => tile === TILE_GROUND ? tile : 0),
     }, {
         name: 'blockers',
-        data: map.map(tile => tile === TILE_BLOCKER ? TILE_BLOCKER : 0),
+        data: map.map(tile => (tile === TILE_BLOCKER || tile === TILE_BASE) ? TILE_BLOCKER : 0),
+    }, {
+        name: 'bases',
+        data: map.map(tile => tile === TILE_BASE ? tile : 0),
     }]);
 
     player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
     sprites.push(player);
 
-    for (let i = 1; i <= numberOfItemsToCollect; i++) {
+    for (let i = 0; i < artifactCount; i++) {
         let pos = getStartingPosition();
         if (pos) {
-            let item = createItem(pos, i);
-            sprites.push(item);
+            let artifact = createArtifact(pos, i);
+            artifacts.push(artifact);
+            sprites.push(artifact);
         }
     }
 
@@ -366,8 +394,6 @@ function createMap() {
         }
     }
 }
-
-let nextItemNumberToCollect = 1;
 
 function createText(x, y, text, ttl) {
     return kontra.sprite({
@@ -386,11 +412,6 @@ function createText(x, y, text, ttl) {
 
         }
     });
-}
-
-function addText(x, y, text, ttl) {
-    let textSprite = createText(x, y, text, ttl);
-    spritesToBeAdded.push(textSprite);
 }
 
 function addInfoText(text) {
@@ -428,35 +449,13 @@ function pickUpItem(player) {
     }
 }
 
-function isOnGroundTile(sprite, tile) {
-    let tileAtSpot = tileEngine.tileAtLayer(
-        'ground',
-        {
-            x: -tileEngine.sx + sprite.x + sprite.width / 2,
-            y: -tileEngine.sy + sprite.y + sprite.height,
-        });
-    return (tileAtSpot === tile);
-}
-
 function dropItem(player) {
     if (player.hasItem()) {
         let item = player.items.pop();
         item.isPickedUp = false;
         item.x = player.x + player.width / 2 - item.width / 2;
         item.y = player.y + player.height - item.height;
-
-        if (! isOnGroundTile(item, TILE_BASE)) {
-            spritesToBeAdded.push(item);
-        } else if (item.number !== nextItemNumberToCollect) {
-            addText(item.x + 20, item.y, `Next item is ${nextItemNumberToCollect}!`, 100);
-            spritesToBeAdded.push(item);
-        } else {
-            nextItemNumberToCollect++;
-
-            if (nextItemNumberToCollect > numberOfItemsToCollect) {
-                addInfoText("YOU WIN");
-            }
-        }
+        spritesToBeAdded.push(item);
     }
 }
 
@@ -499,6 +498,10 @@ function checkCollisions() {
     }
 }
 
+function isWinning() {
+    return artifacts.every(a => collidesWithLayer(a, 'bases'));
+}
+
 function createGameLoop() {
     return kontra.gameLoop({
         update() {
@@ -510,6 +513,11 @@ function createGameLoop() {
             checkCollisions();
 
             adjustCamera();
+
+            if (!levelDone && isWinning()) {
+                addInfoText("YOU WIN");
+                levelDone = true;
+            }
 
             for (let i = 0; i < uiSprites.length; i++) {
                 let sprite = uiSprites[i];
@@ -554,7 +562,7 @@ function main() {
         .then(() => {
             createMap();
             bindKeys();
-            addInfoText("Collect items in order!");
+            addInfoText("Collect all artifacts!");
             const loop = createGameLoop();
             loop.start();
         }).catch(error => {
