@@ -164,7 +164,7 @@ function createArtifact(position, number) {
             }
             cx.translate(xPos, yPos);
 
-            cx.fillStyle = 'black';
+            cx.fillStyle = collidesWithLayer(this, 'bases') ? this.color : 'black';
             cx.strokeStyle = this.color;
             cx.lineWidth = 3;
 
