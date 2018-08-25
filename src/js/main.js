@@ -61,6 +61,15 @@ function getDistance(a, b) {
     return a.minus(b).magnitude();
 }
 
+function getMovementBetween(spriteFrom, spriteTo) {
+    let fromX = spriteFrom.x + spriteFrom.width / 2;
+    let fromY = spriteFrom.y + spriteFrom.height / 2;
+    let toX = spriteTo.x + spriteTo.width / 2;
+    let toY = spriteTo.y + spriteTo.height / 2;
+
+    return kontra.vector(toX - fromX, toY - fromY);
+}
+
 kontra.vector.prototype.normalized = function () {
     let length = this.magnitude();
     if (length === 0.0) {
@@ -160,38 +169,55 @@ function createGhost(position) {
         dir: getRandomInt(5),
 
         update() {
+            let movement;
+
             if (this._target) {
-                if (2000 < performance.now() - this._targetBegin) {
+                if (1000 < performance.now() - this._targetBegin) {
                     this._target = null;
                     this._targetBegin = null;
                 } else {
-                    let direction = this._target.minus(this.position).normalized();
-                    this.position.add(direction);
+                    movement = this._target.minus(this.position).normalized();
+                }
+            } else {
+                let playerPosition = player.position;
+                let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
+                let distance = getDistance(this.position, attackTarget);
+                if (distance < 300) {
+                    if (distance > 140) {
+                        // Adds some variance to how the ghosts approach the player.
+                        attackTarget.addDir(this.dir, 130);
+                    }
+                    movement = getMovementBetween(this, player).normalized();
                 }
             }
 
-            let playerPosition = player.position;
-            let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
-            let distance = getDistance(this.position, attackTarget);
-            if (distance < 300) {
-                if (distance > 140) {
-                    // Adds some variance to how the ghosts approach the player.
-                    attackTarget.addDir(this.dir, 130);
-                }
-                let attackDirection = attackTarget.minus(this.position).normalized();
-
+            if (movement) {
                 let newBounds = {
-                    x: this.x + attackDirection.x,
-                    y: this.y + attackDirection.y,
+                    x: this.x + movement.x,
+                    y: this.y + movement.y,
                     width: this.width,
                     height: this.height,
                 };
+
                 if (!collidesWithBlocker(newBounds)) {
-                    this.position.add(attackDirection);
+                    this.position.add(movement);
                 } else {
                     let newTarget = kontra.vector(this.x, this.y);
-                    newTarget.x -= attackDirection.x * 50;
-                    newTarget.y -= attackDirection.y * 50;
+
+                    // Back off a little.
+                    newTarget.x -= movement.x * 5;
+                    newTarget.y -= movement.y * 5;
+
+                    let toPlayer = getMovementBetween(this, player);
+                    let dodgeHorizontally = Math.abs(toPlayer.x) < Math.abs(toPlayer.y);
+                    let dodgeAmount = 50;
+
+                    if (dodgeHorizontally) {
+                        newTarget.x += (Math.random() >= 0.5) ? dodgeAmount : -dodgeAmount;
+                    } else {
+                        newTarget.y += (Math.random() >= 0.5) ? dodgeAmount : -dodgeAmount;
+                    }
+
                     this._target = newTarget;
                     this._targetBegin = performance.now();
                 }
