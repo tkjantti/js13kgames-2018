@@ -198,13 +198,6 @@ function createPlayer(position) {
         height: 30,
         items: [],
         ttl: Infinity,
-        keyState: {
-            left: false,
-            right: false,
-            up: false,
-            down: false,
-        },
-        movingHorizontal: false,
 
         hasItem() {
             return this.items.length > 0;
