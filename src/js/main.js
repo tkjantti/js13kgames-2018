@@ -160,6 +160,16 @@ function createGhost(position) {
         dir: getRandomInt(5),
 
         update() {
+            if (this._target) {
+                if (2000 < performance.now() - this._targetBegin) {
+                    this._target = null;
+                    this._targetBegin = null;
+                } else {
+                    let direction = this._target.minus(this.position).normalized();
+                    this.position.add(direction);
+                }
+            }
+
             let playerPosition = player.position;
             let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
             let distance = getDistance(this.position, attackTarget);
@@ -178,6 +188,12 @@ function createGhost(position) {
                 };
                 if (!collidesWithBlocker(newBounds)) {
                     this.position.add(attackDirection);
+                } else {
+                    let newTarget = kontra.vector(this.x, this.y);
+                    newTarget.x -= attackDirection.x * 50;
+                    newTarget.y -= attackDirection.y * 50;
+                    this._target = newTarget;
+                    this._targetBegin = performance.now();
                 }
             }
         },
