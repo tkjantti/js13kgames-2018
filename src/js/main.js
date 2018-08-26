@@ -59,6 +59,7 @@
 
     let player;
 
+    let online = true;
     let levelDone = false;
 
     function getRandomInt(max) {
@@ -131,6 +132,10 @@
         return tileEngine.layerCollidesWith(layer, cameraCoordinateBounds);
     }
 
+    function collidesWithBlockers(sprite) {
+        return collidesWithLayer(sprite, online ? 'blockers' : 'bases');
+    }
+
     function keepWithinMap(sprite) {
         sprite.position.clamp(
             0,
@@ -198,7 +203,7 @@
             update() {
                 let movement;
 
-                if (collidesWithLayer(this, 'blockers')) {
+                if (collidesWithBlockers(this)) {
                     this.color = 'yellow';
                     let randomDirection = kontra.vector(
                         (-0.5 + Math.random()) * 20,
@@ -237,7 +242,7 @@
                         height: this.height,
                     };
 
-                    if (!collidesWithLayer(newBounds, 'blockers')) {
+                    if (!collidesWithBlockers(newBounds)) {
                         this.position.add(movement);
                     } else {
                         let newTarget = kontra.vector(this.x, this.y);
@@ -374,9 +379,11 @@
         }, {
             name: 'blockers',
             data: mapFromString(map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0),
+            render: false,
         }, {
             name: 'bases',
             data: mapFromString(map, tile => tile === '@' ? TILE_BASE : 0),
+            render: false,
         }]);
 
         player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
@@ -474,6 +481,10 @@
                 }
             }
         });
+
+        kontra.keys.bind('o', () => {
+            online = !online;
+        });
     }
 
     function adjustCamera() {
@@ -544,6 +555,10 @@
 
             render() {
                 tileEngine.render();
+                if (online) {
+                    tileEngine.renderLayer('blockers');
+                }
+                tileEngine.renderLayer('bases');
 
                 kontra.context.save();
                 kontra.context.translate(-tileEngine.sx, -tileEngine.sy);
