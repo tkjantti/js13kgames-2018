@@ -24,7 +24,10 @@
         '#0000FF',
     ];
 
+    const ONLINE_TOGGLE_DELAY = 2000;
+
     const LAYER_GROUND = 'G';
+    const LAYER_FLASHING = 'F';
     const LAYER_BLOCKERS = 'B';
     const LAYER_BASES = 'A';
 
@@ -64,6 +67,8 @@
     let player;
 
     let online = true;
+    let onlineToggleSwitchTime;
+
     let levelDone = false;
 
     function getRandomInt(max) {
@@ -381,6 +386,10 @@
             name: LAYER_GROUND,
             data: mapFromString(map, tile => tile === ' ' ? TILE_GROUND : 0),
         }, {
+            name: LAYER_FLASHING,
+            data: mapFromString(map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0),
+            render: false,
+        }, {
             name: LAYER_BLOCKERS,
             data: mapFromString(map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0),
             render: false,
@@ -487,7 +496,7 @@
         });
 
         kontra.keys.bind('o', () => {
-            online = !online;
+            onlineToggleSwitchTime = performance.now();
         });
     }
 
@@ -534,6 +543,12 @@
 
                 adjustCamera();
 
+                if (onlineToggleSwitchTime &&
+                    ONLINE_TOGGLE_DELAY < (performance.now() - onlineToggleSwitchTime)) {
+                    online = !online;
+                    onlineToggleSwitchTime = null;
+                }
+
                 if (!levelDone && isWinning()) {
                     addInfoText("YOU WIN");
                     levelDone = true;
@@ -559,7 +574,10 @@
 
             render() {
                 tileEngine.render();
-                if (online) {
+                if (onlineToggleSwitchTime && (Math.random() >= 0.5)) {
+                    tileEngine.renderLayer(LAYER_FLASHING);
+                }
+                if (online && !onlineToggleSwitchTime) {
                     tileEngine.renderLayer(LAYER_BLOCKERS);
                 }
                 tileEngine.renderLayer(LAYER_BASES);
