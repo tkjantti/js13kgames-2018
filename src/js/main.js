@@ -382,16 +382,19 @@
             image: kontra.assets.images[tileSheetImage],
         });
 
+        const blockerData = mapFromString(
+            map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0);
+
         tileEngine.addLayers([{
             name: LAYER_GROUND,
             data: mapFromString(map, tile => tile === ' ' ? TILE_GROUND : 0),
         }, {
             name: LAYER_FLASHING,
-            data: mapFromString(map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0),
+            data: blockerData,
             render: false,
         }, {
             name: LAYER_BLOCKERS,
-            data: mapFromString(map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0),
+            data: blockerData,
             render: false,
         }, {
             name: LAYER_BASES,
