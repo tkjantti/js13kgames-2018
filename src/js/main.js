@@ -24,6 +24,10 @@
         '#0000FF',
     ];
 
+    const LAYER_GROUND = 'G';
+    const LAYER_BLOCKERS = 'B';
+    const LAYER_BASES = 'A';
+
     const tileSheetImage = '../images/tilesheet.png';
 
     const map =
@@ -133,7 +137,7 @@
     }
 
     function collidesWithBlockers(sprite) {
-        return collidesWithLayer(sprite, online ? 'blockers' : 'bases');
+        return collidesWithLayer(sprite, online ? LAYER_BLOCKERS : LAYER_BASES);
     }
 
     function keepWithinMap(sprite) {
@@ -170,7 +174,7 @@
                 }
                 cx.translate(xPos, yPos);
 
-                cx.fillStyle = collidesWithLayer(this, 'bases') ? this.color : 'black';
+                cx.fillStyle = collidesWithLayer(this, LAYER_BASES) ? this.color : 'black';
                 cx.strokeStyle = this.color;
                 cx.lineWidth = 3;
 
@@ -374,14 +378,14 @@
         });
 
         tileEngine.addLayers([{
-            name: 'ground',
+            name: LAYER_GROUND,
             data: mapFromString(map, tile => tile === ' ' ? TILE_GROUND : 0),
         }, {
-            name: 'blockers',
+            name: LAYER_BLOCKERS,
             data: mapFromString(map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0),
             render: false,
         }, {
-            name: 'bases',
+            name: LAYER_BASES,
             data: mapFromString(map, tile => tile === '@' ? TILE_BASE : 0),
             render: false,
         }]);
@@ -515,7 +519,7 @@
     }
 
     function isWinning() {
-        return artifacts.every(a => collidesWithLayer(a, 'bases'));
+        return artifacts.every(a => collidesWithLayer(a, LAYER_BASES));
     }
 
     function createGameLoop() {
@@ -556,9 +560,9 @@
             render() {
                 tileEngine.render();
                 if (online) {
-                    tileEngine.renderLayer('blockers');
+                    tileEngine.renderLayer(LAYER_BLOCKERS);
                 }
-                tileEngine.renderLayer('bases');
+                tileEngine.renderLayer(LAYER_BASES);
 
                 kontra.context.save();
                 kontra.context.translate(-tileEngine.sx, -tileEngine.sy);
