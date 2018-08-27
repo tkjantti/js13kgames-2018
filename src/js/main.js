@@ -534,7 +534,10 @@
         for (let i = 0; i < sprites.length; i++) {
             let sprite = sprites[i];
 
-            if (sprite.type === 'ghost' && player.collidesWith(sprite)) {
+            if ((sprite.type === 'ghost') &&
+                (sprite.color !== 'yellow') &&
+                player.collidesWith(sprite))
+            {
                 player.ttl = 0;
             }
         }
