@@ -25,6 +25,8 @@
     ];
 
     const ONLINE_TOGGLE_DELAY = 2000;
+    const ONLINE_MIN_TOGGLE_TIME = 8000;
+    const ONLINE_MAX_TOGGLE_TIME = 30000;
 
     const LAYER_GROUND = 'G';
     const LAYER_FLASHING = 'F';
@@ -67,7 +69,15 @@
     let player;
 
     let online = true;
+
+    // When online mode was requested on/off (it takes a little time to toggle it).
     let onlineToggleSwitchTime;
+
+    // Last time when online mode was toggled on/off.
+    let onlineLatestToggleTime = performance.now();
+
+    // How long to wait until next on/off toggle.
+    let onlineToggleWaitTime = 10000;
 
     let levelDone = false;
 
@@ -546,8 +556,18 @@
 
                 adjustCamera();
 
+                let now = performance.now();
+
+                if (onlineToggleWaitTime < (now - onlineLatestToggleTime)) {
+                    onlineToggleSwitchTime = now;
+                    onlineLatestToggleTime = now;
+                    onlineToggleWaitTime =
+                        ONLINE_MIN_TOGGLE_TIME +
+                        Math.random() * (ONLINE_MAX_TOGGLE_TIME - ONLINE_MIN_TOGGLE_TIME);
+                }
+
                 if (onlineToggleSwitchTime &&
-                    ONLINE_TOGGLE_DELAY < (performance.now() - onlineToggleSwitchTime)) {
+                    ONLINE_TOGGLE_DELAY < (now - onlineToggleSwitchTime)) {
                     online = !online;
                     onlineToggleSwitchTime = null;
                 }
