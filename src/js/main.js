@@ -24,6 +24,15 @@
         '#0000FF',
     ];
 
+    const ONLINE_TOGGLE_DELAY = 2000;
+    const ONLINE_MIN_TOGGLE_TIME = 8000;
+    const ONLINE_MAX_TOGGLE_TIME = 30000;
+
+    const LAYER_GROUND = 'G';
+    const LAYER_FLASHING = 'F';
+    const LAYER_BLOCKERS = 'B';
+    const LAYER_BASES = 'A';
+
     const tileSheetImage = '../images/tilesheet.png';
 
     const map =
@@ -58,6 +67,17 @@
     let artifacts = [];
 
     let player;
+
+    let online = true;
+
+    // When online mode was requested on/off (it takes a little time to toggle it).
+    let onlineToggleSwitchTime;
+
+    // Last time when online mode was toggled on/off.
+    let onlineLatestToggleTime = performance.now();
+
+    // How long to wait until next on/off toggle.
+    let onlineToggleWaitTime = 10000;
 
     let levelDone = false;
 
@@ -131,6 +151,10 @@
         return tileEngine.layerCollidesWith(layer, cameraCoordinateBounds);
     }
 
+    function collidesWithBlockers(sprite) {
+        return collidesWithLayer(sprite, online ? LAYER_BLOCKERS : LAYER_BASES);
+    }
+
     function keepWithinMap(sprite) {
         sprite.position.clamp(
             0,
@@ -165,7 +189,7 @@
                 }
                 cx.translate(xPos, yPos);
 
-                cx.fillStyle = collidesWithLayer(this, 'bases') ? this.color : 'black';
+                cx.fillStyle = collidesWithLayer(this, LAYER_BASES) ? this.color : 'black';
                 cx.strokeStyle = this.color;
                 cx.lineWidth = 3;
 
@@ -198,7 +222,7 @@
             update() {
                 let movement;
 
-                if (collidesWithLayer(this, 'blockers')) {
+                if (collidesWithBlockers(this)) {
                     this.color = 'yellow';
                     let randomDirection = kontra.vector(
                         (-0.5 + Math.random()) * 20,
@@ -237,7 +261,7 @@
                         height: this.height,
                     };
 
-                    if (!collidesWithLayer(newBounds, 'blockers')) {
+                    if (!collidesWithBlockers(newBounds)) {
                         this.position.add(movement);
                     } else {
                         let newTarget = kontra.vector(this.x, this.y);
@@ -368,15 +392,24 @@
             image: kontra.assets.images[tileSheetImage],
         });
 
+        const blockerData = mapFromString(
+            map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0);
+
         tileEngine.addLayers([{
-            name: 'ground',
+            name: LAYER_GROUND,
             data: mapFromString(map, tile => tile === ' ' ? TILE_GROUND : 0),
         }, {
-            name: 'blockers',
-            data: mapFromString(map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0),
+            name: LAYER_FLASHING,
+            data: blockerData,
+            render: false,
         }, {
-            name: 'bases',
+            name: LAYER_BLOCKERS,
+            data: blockerData,
+            render: false,
+        }, {
+            name: LAYER_BASES,
             data: mapFromString(map, tile => tile === '@' ? TILE_BASE : 0),
+            render: false,
         }]);
 
         player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
@@ -474,6 +507,10 @@
                 }
             }
         });
+
+        kontra.keys.bind('o', () => {
+            onlineToggleSwitchTime = performance.now();
+        });
     }
 
     function adjustCamera() {
@@ -497,14 +534,17 @@
         for (let i = 0; i < sprites.length; i++) {
             let sprite = sprites[i];
 
-            if (sprite.type === 'ghost' && player.collidesWith(sprite)) {
+            if ((sprite.type === 'ghost') &&
+                (sprite.color !== 'yellow') &&
+                player.collidesWith(sprite))
+            {
                 player.ttl = 0;
             }
         }
     }
 
     function isWinning() {
-        return artifacts.every(a => collidesWithLayer(a, 'bases'));
+        return artifacts.every(a => collidesWithLayer(a, LAYER_BASES));
     }
 
     function createGameLoop() {
@@ -518,6 +558,22 @@
                 checkCollisions();
 
                 adjustCamera();
+
+                let now = performance.now();
+
+                if (onlineToggleWaitTime < (now - onlineLatestToggleTime)) {
+                    onlineToggleSwitchTime = now;
+                    onlineLatestToggleTime = now;
+                    onlineToggleWaitTime =
+                        ONLINE_MIN_TOGGLE_TIME +
+                        Math.random() * (ONLINE_MAX_TOGGLE_TIME - ONLINE_MIN_TOGGLE_TIME);
+                }
+
+                if (onlineToggleSwitchTime &&
+                    ONLINE_TOGGLE_DELAY < (now - onlineToggleSwitchTime)) {
+                    online = !online;
+                    onlineToggleSwitchTime = null;
+                }
 
                 if (!levelDone && isWinning()) {
                     addInfoText("YOU WIN");
@@ -544,6 +600,13 @@
 
             render() {
                 tileEngine.render();
+                if (onlineToggleSwitchTime && (Math.random() >= 0.5)) {
+                    tileEngine.renderLayer(LAYER_FLASHING);
+                }
+                if (online && !onlineToggleSwitchTime) {
+                    tileEngine.renderLayer(LAYER_BLOCKERS);
+                }
+                tileEngine.renderLayer(LAYER_BASES);
 
                 kontra.context.save();
                 kontra.context.translate(-tileEngine.sx, -tileEngine.sy);
