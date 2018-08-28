@@ -37,27 +37,28 @@
 
     const tileSheetImage = '../images/tilesheet.png';
 
-    const map =
-        "                          " +
-        "                          " +
-        "                          " +
-        "           ####           " +
-        "           #@@#           " +
-        "    #      #@@#           " +
-        "    #      ####       ##  " +
-        "    #                  #  " +
-        "    #                  #  " +
-        "             ====         " +
-        "                =         " +
-        "                =         " +
-        "         ###    =         " +
-        "           #              " +
-        "                          " +
-        "   #                 #    " +
-        "   ##               ###   " +
-        "    #                     " +
-        "                          " +
-        "                          ";
+    const map = [
+        "                          ",
+        "                          ",
+        "                          ",
+        "           ####           ",
+        "           #@@#           ",
+        "    #      #@@#           ",
+        "    #      ####       ##  ",
+        "    #                  #  ",
+        "    #                  #  ",
+        "             ====         ",
+        "                =         ",
+        "                =         ",
+        "         ###    =         ",
+        "           #              ",
+        "                          ",
+        "   #                 #    ",
+        "   ##               ###   ",
+        "    #                     ",
+        "                          ",
+        "                          "
+    ];
 
     let tileEngine;
 
@@ -387,31 +388,31 @@
         return null;
     }
 
-    function mapFromString(str, convert) {
-        return str.split('').map(convert);
+    function mapFromData(array, convert) {
+        return array.reduce((total, current) => total + current).split('').map(convert);
     }
 
     function createMap() {
         tileEngine = kontra.tileEngine({
             tileWidth: TILE_WIDTH,
             tileHeight: TILE_HEIGHT,
-            width: 26,
-            height: 20,
+            width: map[0].length,
+            height: map.length,
         });
 
         tileEngine.addTilesets({
             image: kontra.assets.images[tileSheetImage],
         });
 
-        const blockerData = mapFromString(
+        const blockerData = mapFromData(
             map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0);
 
         tileEngine.addLayers([{
             name: LAYER_GROUND,
-            data: mapFromString(map, tile => tile === ' ' ? TILE_GROUND : 0),
+            data: mapFromData(map, tile => tile === ' ' ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
-            data: mapFromString(map, tile => tile === '=' ? TILE_WALL : 0),
+            data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
             render: true,
         }, {
             name: LAYER_FLASHING,
@@ -423,7 +424,7 @@
             render: false,
         }, {
             name: LAYER_BASES,
-            data: mapFromString(map, tile => tile === '@' ? TILE_BASE : 0),
+            data: mapFromData(map, tile => tile === '@' ? TILE_BASE : 0),
             render: false,
         }]);
 
