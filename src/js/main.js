@@ -319,7 +319,7 @@
         let result = kontra.sprite({
             type: 'player',
             position: position,
-            color: 'green',
+            color: 'cyan',
             width: 20,
             height: 30,
             items: [],
@@ -388,6 +388,18 @@
         return null;
     }
 
+    function findFirstPositionOf(map, element) {
+        for (let rowIndex = 0; rowIndex < map.length; rowIndex++) {
+            let row = map[rowIndex];
+            let colIndex = row.indexOf(element);
+            if (0 <= colIndex) {
+                return kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT);
+            }
+        }
+
+        return null;
+    }
+
     function mapFromData(array, convert) {
         return array.reduce((total, current) => total + current).split('').map(convert);
     }
@@ -428,7 +440,9 @@
             render: false,
         }]);
 
-        player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight * 0.3));
+        let playerPosition = findFirstPositionOf(map, '@');
+        playerPosition.x += 5;
+        player = createPlayer(playerPosition);
         sprites.push(player);
 
         for (let i = 0; i < artifactCount; i++) {
