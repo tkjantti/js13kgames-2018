@@ -42,15 +42,15 @@
         "                          ",
         "                          ",
         "           ####           ",
-        "           #@@#       A   ",
+        "           #@@#      #A#  ",
         "    #      #@@#           ",
         "    #      ####       ##  ",
         "    #                  #  ",
         "    #                  #  ",
         "             ====         ",
-        "               A=         ",
-        "                =         ",
-        "         ###    =         ",
+        "             ##A=         ",
+        "              ##=         ",
+        "         ###   #=         ",
         "           #              ",
         "                          ",
         "   #                 #    ",
@@ -418,11 +418,11 @@
         });
 
         const blockerData = mapFromData(
-            map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0);
+            map, tile => (tile === '#' || tile === '@' || tile === 'A') ? TILE_BLOCKER : 0);
 
         tileEngine.addLayers([{
             name: LAYER_GROUND,
-            data: mapFromData(map, tile => (tile === ' ' || tile === 'A') ? TILE_GROUND : 0),
+            data: mapFromData(map, tile => (tile === ' ') ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
             data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
