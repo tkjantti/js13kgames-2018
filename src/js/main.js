@@ -42,19 +42,19 @@
         "                          ",
         "                          ",
         "           ####           ",
-        "           #@@#           ",
+        "           #@@#       A   ",
         "    #      #@@#           ",
         "    #      ####       ##  ",
         "    #                  #  ",
         "    #                  #  ",
         "             ====         ",
-        "                =         ",
+        "               A=         ",
         "                =         ",
         "         ###    =         ",
         "           #              ",
         "                          ",
         "   #                 #    ",
-        "   ##               ###   ",
+        "   ##   A           ###   ",
         "    #                     ",
         "                          ",
         "                          "
@@ -388,16 +388,17 @@
         return null;
     }
 
-    function findFirstPositionOf(map, element) {
+    function findPositionsOf(map, element) {
+        let result = [];
         for (let rowIndex = 0; rowIndex < map.length; rowIndex++) {
             let row = map[rowIndex];
             let colIndex = row.indexOf(element);
             if (0 <= colIndex) {
-                return kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT);
+                result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
             }
         }
 
-        return null;
+        return result;
     }
 
     function mapFromData(array, convert) {
@@ -421,7 +422,7 @@
 
         tileEngine.addLayers([{
             name: LAYER_GROUND,
-            data: mapFromData(map, tile => tile === ' ' ? TILE_GROUND : 0),
+            data: mapFromData(map, tile => (tile === ' ' || tile === 'A') ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
             data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
@@ -440,19 +441,20 @@
             render: false,
         }]);
 
-        let playerPosition = findFirstPositionOf(map, '@');
+        let playerPosition = findPositionsOf(map, '@')[0];
         playerPosition.x += 5;
         player = createPlayer(playerPosition);
         sprites.push(player);
 
-        for (let i = 0; i < artifactCount; i++) {
-            let pos = getStartingPosition();
+        findPositionsOf(map, 'A').forEach((pos, i) => {
             if (pos) {
+                pos.x += 5;
+                pos.y += 5;
                 let artifact = createArtifact(pos, i);
                 artifacts.push(artifact);
                 sprites.push(artifact);
             }
-        }
+        });
 
         for (let i = 0; i < 5; i++) {
             var pos = getStartingPosition();
