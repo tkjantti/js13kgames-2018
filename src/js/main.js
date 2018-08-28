@@ -11,6 +11,7 @@
 
     const TILE_GROUND = 1;
     const TILE_BASE = 2;
+    const TILE_WALL = 3;
     const TILE_BLOCKER = 4;
 
     const DIR_NONE = 0, DIR_WEST = 1, DIR_EAST = 2, DIR_NORTH = 3, DIR_SOUTH = 4;
@@ -31,6 +32,7 @@
     const LAYER_GROUND = 'G';
     const LAYER_FLASHING = 'F';
     const LAYER_BLOCKERS = 'B';
+    const LAYER_WALLS = 'W';
     const LAYER_BASES = 'A';
 
     const tileSheetImage = '../images/tilesheet.png';
@@ -45,10 +47,10 @@
         "    #      ####       ##  " +
         "    #                  #  " +
         "    #                  #  " +
-        "                          " +
-        "                          " +
-        "                          " +
-        "         ###              " +
+        "             ====         " +
+        "                =         " +
+        "                =         " +
+        "         ###    =         " +
         "           #              " +
         "                          " +
         "   #                 #    " +
@@ -346,8 +348,17 @@
                     yDiff *= diagonalSpeedCoefficient;
                 }
 
-                this.x += xDiff;
-                this.y += yDiff;
+                let newBounds = {
+                    x: this.x + xDiff,
+                    y: this.y + yDiff,
+                    width: this.width,
+                    height: this.height,
+                };
+
+                if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
+                    this.x = newBounds.x;
+                    this.y = newBounds.y;
+                }
             },
 
             render() {
@@ -399,6 +410,10 @@
             name: LAYER_GROUND,
             data: mapFromString(map, tile => tile === ' ' ? TILE_GROUND : 0),
         }, {
+            name: LAYER_WALLS,
+            data: mapFromString(map, tile => tile === '=' ? TILE_WALL : 0),
+            render: true,
+        }, {
             name: LAYER_FLASHING,
             data: blockerData,
             render: false,
@@ -412,7 +427,7 @@
             render: false,
         }]);
 
-        player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight / 2));
+        player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight * 0.3));
         sprites.push(player);
 
         for (let i = 0; i < artifactCount; i++) {
