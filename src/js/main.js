@@ -8,7 +8,6 @@
     const TILE_HEIGHT = 32;
 
     const TILE_GROUND = 1;
-    const TILE_BASE = 2;
     const TILE_WALL = 3;
     const TILE_BLOCKER = 4;
 
@@ -31,7 +30,6 @@
     const LAYER_FLASHING = 'F';
     const LAYER_BLOCKERS = 'B';
     const LAYER_WALLS = 'W';
-    const LAYER_BASES = 'A';
 
     const tileSheetImage = '../images/tilesheet.png';
 
@@ -75,8 +73,8 @@
             "       G                  ",
             "                          ",
             "           ####           ",
-            "           #@@#      #A#  ",
-            "    #      #@@#          G",
+            "           #@##      #A#  ",
+            "    #      ####          G",
             "    #      ####       ##  ",
             "    # G                #  ",
             "    #                  #  ",
@@ -193,7 +191,7 @@
     }
 
     function collidesWithBlockers(sprite) {
-        return collidesWithLayer(sprite, online ? LAYER_BLOCKERS : LAYER_BASES);
+        return online && collidesWithLayer(sprite, LAYER_BLOCKERS);
     }
 
     function keepWithinMap(sprite) {
@@ -429,11 +427,13 @@
         });
 
         const blockerData = mapFromData(
-            map, tile => (tile === '#' || tile === '@' || tile === 'A') ? TILE_BLOCKER : 0);
+            map, tile => (tile === '#' || tile === 'A') ? TILE_BLOCKER : 0);
 
         tileEngine.addLayers([{
             name: LAYER_GROUND,
-            data: mapFromData(map, tile => (tile === ' ' || tile === 'G') ? TILE_GROUND : 0),
+            data: mapFromData(
+                map,
+                tile => (tile === ' ' || tile === 'G' || tile === '@') ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
             data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
@@ -445,10 +445,6 @@
         }, {
             name: LAYER_BLOCKERS,
             data: blockerData,
-            render: false,
-        }, {
-            name: LAYER_BASES,
-            data: mapFromData(map, tile => tile === '@' ? TILE_BASE : 0),
             render: false,
         }]);
 
@@ -594,7 +590,6 @@
                 if (online && !onlineToggleSwitchTime) {
                     tileEngine.renderLayer(LAYER_BLOCKERS);
                 }
-                tileEngine.renderLayer(LAYER_BASES);
 
                 kontra.context.save();
                 kontra.context.translate(-tileEngine.sx, -tileEngine.sy);
