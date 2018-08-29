@@ -116,8 +116,6 @@
     // How long to wait until next on/off toggle.
     let onlineToggleWaitTime;
 
-    let levelDone = false;
-
     function resetLevel() {
         uiSprites = [];
         uiSpritesToAdd = [];
@@ -126,7 +124,6 @@
         onlineToggleSwitchTime = null;
         onlineLatestToggleTime = performance.now();
         onlineToggleWaitTime = 10000;
-        levelDone = false;
     }
 
     function getRandomInt(max) {
@@ -577,14 +574,8 @@
                     onlineToggleSwitchTime = null;
                 }
 
-                if (!levelDone && isWinning()) {
-                    levelDone = true;
-                    mapIndex++;
-                    if (mapIndex === maps.length) {
-                        addInfoText("YOU WIN");
-                    } else {
-                        createMap(maps[mapIndex]);
-                    }
+                if (isWinning() && (++mapIndex < maps.length)) {
+                    createMap(maps[mapIndex]);
                 }
 
                 for (let i = 0; i < uiSprites.length; i++) {
@@ -628,6 +619,10 @@
                     cx,
                     kontra.canvas.width / 2, 20,
                     `${numberOfArtifactsCollected} / ${artifactCount}`);
+
+                if (isWinning()) {
+                    drawText(cx, kontra.canvas.width * 0.46, 80, "YOU WIN!");
+                }
             }
         });
     }
