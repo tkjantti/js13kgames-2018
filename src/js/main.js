@@ -8,7 +8,6 @@
     const TILE_HEIGHT = 32;
 
     const TILE_GROUND = 1;
-    const TILE_BASE = 2;
     const TILE_WALL = 3;
     const TILE_BLOCKER = 4;
 
@@ -31,7 +30,8 @@
     const LAYER_FLASHING = 'F';
     const LAYER_BLOCKERS = 'B';
     const LAYER_WALLS = 'W';
-    const LAYER_BASES = 'A';
+
+    const HELP_TEXT_DISPLAY_TIME = 3000;
 
     const tileSheetImage = '../images/tilesheet.png';
 
@@ -75,8 +75,8 @@
             "       G                  ",
             "                          ",
             "           ####           ",
-            "           #@@#      #A#  ",
-            "    #      #@@#          G",
+            "           #@##      #A#  ",
+            "    #      ####          G",
             "    #      ####       ##  ",
             "    # G                #  ",
             "    #                  #  ",
@@ -99,13 +99,12 @@
     let tileEngine;
 
     let uiSprites = [];
-    let uiSpritesToAdd = [];
     let sprites = [];
-    let spritesToBeAdded = [];
-
-    let artifacts = [];
 
     let player;
+
+    let artifactCount;
+    let numberOfArtifactsCollected = 0;
 
     let online;
 
@@ -118,19 +117,15 @@
     // How long to wait until next on/off toggle.
     let onlineToggleWaitTime;
 
-    let levelDone = false;
+    let levelStartTime;
 
     function resetLevel() {
         uiSprites = [];
-        uiSpritesToAdd = [];
         sprites = [];
-        spritesToBeAdded = [];
-        artifacts = [];
         online = true;
         onlineToggleSwitchTime = null;
-        onlineLatestToggleTime = performance.now();
+        onlineLatestToggleTime = levelStartTime = performance.now();
         onlineToggleWaitTime = 10000;
-        levelDone = false;
     }
 
     function getRandomInt(max) {
@@ -198,7 +193,7 @@
     }
 
     function collidesWithBlockers(sprite) {
-        return collidesWithLayer(sprite, online ? LAYER_BLOCKERS : LAYER_BASES);
+        return online && collidesWithLayer(sprite, LAYER_BLOCKERS);
     }
 
     function keepWithinMap(sprite) {
@@ -219,23 +214,14 @@
             height: 20,
             ttl: Infinity,
 
-            render(x, y) {
+            render() {
                 let cx = this.context;
                 let w = this.width, h = this.height;
-                let xPos, yPos;
 
                 cx.save();
+                cx.translate(this.x, this.y);
 
-                if (y) {
-                    xPos = x;
-                    yPos = y;
-                } else {
-                    xPos = this.x;
-                    yPos = this.y;
-                }
-                cx.translate(xPos, yPos);
-
-                cx.fillStyle = collidesWithLayer(this, LAYER_BASES) ? this.color : 'black';
+                cx.fillStyle = 'black';
                 cx.strokeStyle = this.color;
                 cx.lineWidth = 3;
 
@@ -365,12 +351,7 @@
             color: 'cyan',
             width: 20,
             height: 30,
-            items: [],
             ttl: Infinity,
-
-            hasItem() {
-                return this.items.length > 0;
-            },
 
             update() {
                 let xDiff = 0, yDiff = 0;
@@ -408,11 +389,6 @@
             render() {
                 this.context.fillStyle = this.color;
                 this.context.fillRect(this.x, this.y, this.width, this.height);
-
-                for (let i = 0; i < this.items.length; i++) {
-                    let item = this.items[i];
-                    item.render(this.x + this.width / 2 - item.width / 2, this.y - 5);
-                }
             }
         });
 
@@ -453,11 +429,13 @@
         });
 
         const blockerData = mapFromData(
-            map, tile => (tile === '#' || tile === '@' || tile === 'A') ? TILE_BLOCKER : 0);
+            map, tile => (tile === '#' || tile === 'A') ? TILE_BLOCKER : 0);
 
         tileEngine.addLayers([{
             name: LAYER_GROUND,
-            data: mapFromData(map, tile => (tile === ' ' || tile === 'G') ? TILE_GROUND : 0),
+            data: mapFromData(
+                map,
+                tile => (tile === ' ' || tile === 'G' || tile === '@') ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
             data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
@@ -470,10 +448,6 @@
             name: LAYER_BLOCKERS,
             data: blockerData,
             render: false,
-        }, {
-            name: LAYER_BASES,
-            data: mapFromData(map, tile => tile === '@' ? TILE_BASE : 0),
-            render: false,
         }]);
 
         let playerPosition = findPositionsOf(map, '@')[0];
@@ -481,11 +455,13 @@
         player = createPlayer(playerPosition);
         sprites.push(player);
 
-        findPositionsOf(map, 'A').forEach((pos, i) => {
+        let artifactPositions = findPositionsOf(map, 'A');
+        artifactCount = artifactPositions.length;
+        numberOfArtifactsCollected = 0;
+        artifactPositions.forEach((pos, i) => {
             pos.x += 5;
             pos.y += 5;
             let artifact = createArtifact(pos, i);
-            artifacts.push(artifact);
             sprites.push(artifact);
         });
 
@@ -495,81 +471,13 @@
         });
     }
 
-    function createText(x, y, text, ttl) {
-        return kontra.sprite({
-            type: 'text',
-            x: x,
-            y: y,
-            color: 'white',
-            text: text,
-            ttl: ttl,
-
-            render() {
-                this.context.fillStyle = this.color;
-                this.context.font = "16px Sans-serif";
-                this.context.textBaseline = "top";
-                this.context.fillText(this.text, this.x, this.y);
-
-            }
-        });
-    }
-
-    function addInfoText(text) {
-        let textSprite = createText(kontra.canvas.width * 0.4, kontra.canvas.height * 0.25, text, 200);
-        uiSpritesToAdd.push(textSprite);
-    }
-
-    function findClosestOfType(self, type) {
-        let min = Infinity;
-        let closest = null;
-
-        for (let i = 0; i < sprites.length; i++) {
-            let other = sprites[i];
-
-            if (other.type === type) {
-                let distance = getDistance(self.position, other.position);
-                if (distance < min) {
-                    min = distance;
-                    closest = other;
-                }
-            }
-        }
-
-        return closest;
-    }
-
-    function pickUpItem(player) {
-        let item = findClosestOfType(player, 'item');
-
-        if (item && getDistance(player.position, item.position) < 40) {
-            item.isPickedUp = true;
-            item.x = 0;
-            item.y = 0;
-            player.items.push(item);
-        }
-    }
-
-    function dropItem(player) {
-        if (player.hasItem()) {
-            let item = player.items.pop();
-            item.isPickedUp = false;
-            item.x = player.x + player.width / 2 - item.width / 2;
-            item.y = player.y + player.height - item.height;
-            spritesToBeAdded.push(item);
-        }
+    function drawText(cx, x, y, text) {
+        cx.fillStyle = 'white';
+        cx.font = "16px Sans-serif";
+        cx.fillText(text, x, y);
     }
 
     function bindKeys() {
-        kontra.keys.bind('space', () => {
-            if (player.isAlive()) {
-                if (player.hasItem()) {
-                    dropItem(player);
-                } else {
-                    pickUpItem(player);
-                }
-            }
-        });
-
         kontra.keys.bind('o', () => {
             onlineToggleSwitchTime = performance.now();
         });
@@ -602,11 +510,18 @@
             {
                 player.ttl = 0;
             }
+
+            if ((sprite.type === 'item') &&
+                player.collidesWith(sprite))
+            {
+                sprite.ttl = 0;
+                numberOfArtifactsCollected++;
+            }
         }
     }
 
     function isWinning() {
-        return artifacts.every(a => collidesWithLayer(a, LAYER_BASES));
+        return numberOfArtifactsCollected === artifactCount;
     }
 
     function createGameLoop() {
@@ -637,14 +552,8 @@
                     onlineToggleSwitchTime = null;
                 }
 
-                if (!levelDone && isWinning()) {
-                    levelDone = true;
-                    mapIndex++;
-                    if (mapIndex === maps.length) {
-                        addInfoText("YOU WIN");
-                    } else {
-                        createMap(maps[mapIndex]);
-                    }
+                if (isWinning() && (++mapIndex < maps.length)) {
+                    createMap(maps[mapIndex]);
                 }
 
                 for (let i = 0; i < uiSprites.length; i++) {
@@ -652,20 +561,12 @@
                     sprite.update();
                 }
 
-                sprites = sprites.filter(s => !s.isPickedUp && s.isAlive());
+                sprites = sprites.filter(s => s.isAlive());
                 uiSprites = uiSprites.filter(s => s.isAlive());
-
-                while (spritesToBeAdded.length > 0) {
-                    let s = spritesToBeAdded.shift();
-                    sprites.push(s);
-                }
-                while (uiSpritesToAdd.length > 0) {
-                    let s = uiSpritesToAdd.shift();
-                    uiSprites.push(s);
-                }
             },
 
             render() {
+                let cx = kontra.context;
                 tileEngine.render();
                 if (onlineToggleSwitchTime && (Math.random() >= 0.5)) {
                     tileEngine.renderLayer(LAYER_FLASHING);
@@ -673,19 +574,32 @@
                 if (online && !onlineToggleSwitchTime) {
                     tileEngine.renderLayer(LAYER_BLOCKERS);
                 }
-                tileEngine.renderLayer(LAYER_BASES);
 
-                kontra.context.save();
-                kontra.context.translate(-tileEngine.sx, -tileEngine.sy);
+                cx.save();
+                cx.translate(-tileEngine.sx, -tileEngine.sy);
                 for (let i = 0; i < sprites.length; i++) {
                     let sprite = sprites[i];
                     sprite.render();
                 }
-                kontra.context.restore();
+                cx.restore();
 
                 for (let i = 0; i < uiSprites.length; i++) {
                     let sprite = uiSprites[i];
                     sprite.render();
+                }
+
+                drawText(
+                    cx,
+                    kontra.canvas.width / 2, 20,
+                    `${numberOfArtifactsCollected} / ${artifactCount}`);
+
+                if (isWinning()) {
+                    drawText(cx, kontra.canvas.width * 0.46, 80, "YOU WIN!");
+                } else if ((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) {
+                    drawText(
+                        cx,
+                        kontra.canvas.width * 0.42, kontra.canvas.height * 0.25,
+                        "Collect all artifacts!");
                 }
             }
         });
@@ -697,7 +611,6 @@
             .then(() => {
                 createMap(maps[mapIndex]);
                 bindKeys();
-                addInfoText("Collect all artifacts!");
                 const loop = createGameLoop();
                 loop.start();
             }).catch(error => {
