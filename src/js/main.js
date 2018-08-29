@@ -57,13 +57,13 @@
             "                    ",
             "                    ",
             "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
+            "         ####       ",
+            "         #GG#       ",
+            "         #GG#       ",
             " #@###############  ",
             " #################  ",
             "                #A  ",
-            "                    ",
+            "          GG        ",
             "                    ",
             "                    ",
             "                    ",
@@ -72,23 +72,23 @@
         ],
         [
             "                          ",
-            "                          ",
+            "       G                  ",
             "                          ",
             "           ####           ",
             "           #@@#      #A#  ",
-            "    #      #@@#           ",
+            "    #      #@@#          G",
             "    #      ####       ##  ",
-            "    #                  #  ",
+            "    # G                #  ",
             "    #                  #  ",
             "             ====         ",
-            "             ##A=         ",
+            "             ##A=   G     ",
             "              ##=         ",
             "         ###   #=         ",
-            "           #              ",
+            "           #    G         ",
             "                          ",
             "   #                 #    ",
             "   ##   A           ###   ",
-            "    #                     ",
+            "   G#          G          ",
             "                          ",
             "                          "
         ]
@@ -187,12 +187,6 @@
         }
     };
 
-    function getRandomPosition(margin = 40) {
-        let x = margin + Math.random() * (tileEngine.mapWidth - 2 * margin);
-        let y = margin + Math.random() * (tileEngine.mapHeight - 2 * margin);
-        return kontra.vector(x, y);
-    }
-
     function collidesWithLayer(sprite, layer) {
         let cameraCoordinateBounds = {
             x: -tileEngine.sx + sprite.x,
@@ -265,8 +259,8 @@
         let result = kontra.sprite({
             type: 'ghost',
             position: position,
-            width: TILE_WIDTH,
-            height: TILE_HEIGHT,
+            width: 30,
+            height: 30,
             color: 'red',
             ttl: Infinity,
             dir: getRandomInt(5),
@@ -426,24 +420,14 @@
         return result;
     }
 
-    function getStartingPosition() {
-        for (let i = 0; i < 20; i++) {
-            let pos = getRandomPosition();
-            if (sprites.every(s => getDistance(pos, s.position) > 100)) { // jshint ignore:line
-                return pos;
-            }
-        }
-
-        return null;
-    }
-
     function findPositionsOf(map, element) {
         let result = [];
         for (let rowIndex = 0; rowIndex < map.length; rowIndex++) {
             let row = map[rowIndex];
-            let colIndex = row.indexOf(element);
-            if (0 <= colIndex) {
-                result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
+            for (let colIndex = 0; colIndex < row.length; colIndex++) {
+                if (row[colIndex] === element) {
+                    result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
+                }
             }
         }
 
@@ -473,7 +457,7 @@
 
         tileEngine.addLayers([{
             name: LAYER_GROUND,
-            data: mapFromData(map, tile => (tile === ' ') ? TILE_GROUND : 0),
+            data: mapFromData(map, tile => (tile === ' ' || tile === 'G') ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
             data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
@@ -505,13 +489,10 @@
             sprites.push(artifact);
         });
 
-        for (let i = 0; i < 5; i++) {
-            var pos = getStartingPosition();
-            if (pos) {
-                let ghost = createGhost(pos);
-                sprites.push(ghost);
-            }
-        }
+        findPositionsOf(map, 'G').forEach((pos) => {
+            let ghost = createGhost(pos);
+            sprites.push(ghost);
+        });
     }
 
     function createText(x, y, text, ttl) {
