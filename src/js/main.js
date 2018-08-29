@@ -31,6 +31,8 @@
     const LAYER_BLOCKERS = 'B';
     const LAYER_WALLS = 'W';
 
+    const HELP_TEXT_DISPLAY_TIME = 3000;
+
     const tileSheetImage = '../images/tilesheet.png';
 
     const maps = [
@@ -97,7 +99,6 @@
     let tileEngine;
 
     let uiSprites = [];
-    let uiSpritesToAdd = [];
     let sprites = [];
 
     let player;
@@ -116,13 +117,14 @@
     // How long to wait until next on/off toggle.
     let onlineToggleWaitTime;
 
+    let levelStartTime;
+
     function resetLevel() {
         uiSprites = [];
-        uiSpritesToAdd = [];
         sprites = [];
         online = true;
         onlineToggleSwitchTime = null;
-        onlineLatestToggleTime = performance.now();
+        onlineLatestToggleTime = levelStartTime = performance.now();
         onlineToggleWaitTime = 10000;
     }
 
@@ -469,34 +471,10 @@
         });
     }
 
-    function createText(x, y, text, ttl) {
-        return kontra.sprite({
-            type: 'text',
-            x: x,
-            y: y,
-            color: 'white',
-            text: text,
-            ttl: ttl,
-
-            render() {
-                this.context.fillStyle = this.color;
-                this.context.font = "16px Sans-serif";
-                this.context.textBaseline = "top";
-                this.context.fillText(this.text, this.x, this.y);
-
-            }
-        });
-    }
-
     function drawText(cx, x, y, text) {
         cx.fillStyle = 'white';
         cx.font = "16px Sans-serif";
         cx.fillText(text, x, y);
-    }
-
-    function addInfoText(text) {
-        let textSprite = createText(kontra.canvas.width * 0.4, kontra.canvas.height * 0.25, text, 200);
-        uiSpritesToAdd.push(textSprite);
     }
 
     function bindKeys() {
@@ -585,11 +563,6 @@
 
                 sprites = sprites.filter(s => s.isAlive());
                 uiSprites = uiSprites.filter(s => s.isAlive());
-
-                while (uiSpritesToAdd.length > 0) {
-                    let s = uiSpritesToAdd.shift();
-                    uiSprites.push(s);
-                }
             },
 
             render() {
@@ -622,6 +595,11 @@
 
                 if (isWinning()) {
                     drawText(cx, kontra.canvas.width * 0.46, 80, "YOU WIN!");
+                } else if ((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) {
+                    drawText(
+                        cx,
+                        kontra.canvas.width * 0.42, kontra.canvas.height * 0.25,
+                        "Collect all artifacts!");
                 }
             }
         });
@@ -633,7 +611,6 @@
             .then(() => {
                 createMap(maps[mapIndex]);
                 bindKeys();
-                addInfoText("Collect all artifacts!");
                 const loop = createGameLoop();
                 loop.start();
             }).catch(error => {
