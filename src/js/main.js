@@ -102,6 +102,9 @@
 
     let player;
 
+    let artifactCount;
+    let numberOfArtifactsCollected = 0;
+
     let online;
 
     // When online mode was requested on/off (it takes a little time to toggle it).
@@ -453,7 +456,10 @@
         player = createPlayer(playerPosition);
         sprites.push(player);
 
-        findPositionsOf(map, 'A').forEach((pos, i) => {
+        let artifactPositions = findPositionsOf(map, 'A');
+        artifactCount = artifactPositions.length;
+        numberOfArtifactsCollected = 0;
+        artifactPositions.forEach((pos, i) => {
             pos.x += 5;
             pos.y += 5;
             let artifact = createArtifact(pos, i);
@@ -523,11 +529,18 @@
             {
                 player.ttl = 0;
             }
+
+            if ((sprite.type === 'item') &&
+                player.collidesWith(sprite))
+            {
+                sprite.ttl = 0;
+                numberOfArtifactsCollected++;
+            }
         }
     }
 
     function isWinning() {
-        return false;
+        return numberOfArtifactsCollected === artifactCount;
     }
 
     function createGameLoop() {
