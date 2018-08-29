@@ -491,6 +491,12 @@
         });
     }
 
+    function drawText(cx, x, y, text) {
+        cx.fillStyle = 'white';
+        cx.font = "16px Sans-serif";
+        cx.fillText(text, x, y);
+    }
+
     function addInfoText(text) {
         let textSprite = createText(kontra.canvas.width * 0.4, kontra.canvas.height * 0.25, text, 200);
         uiSpritesToAdd.push(textSprite);
@@ -596,6 +602,7 @@
             },
 
             render() {
+                let cx = kontra.context;
                 tileEngine.render();
                 if (onlineToggleSwitchTime && (Math.random() >= 0.5)) {
                     tileEngine.renderLayer(LAYER_FLASHING);
@@ -604,18 +611,23 @@
                     tileEngine.renderLayer(LAYER_BLOCKERS);
                 }
 
-                kontra.context.save();
-                kontra.context.translate(-tileEngine.sx, -tileEngine.sy);
+                cx.save();
+                cx.translate(-tileEngine.sx, -tileEngine.sy);
                 for (let i = 0; i < sprites.length; i++) {
                     let sprite = sprites[i];
                     sprite.render();
                 }
-                kontra.context.restore();
+                cx.restore();
 
                 for (let i = 0; i < uiSprites.length; i++) {
                     let sprite = uiSprites[i];
                     sprite.render();
                 }
+
+                drawText(
+                    cx,
+                    kontra.canvas.width / 2, 20,
+                    `${numberOfArtifactsCollected} / ${artifactCount}`);
             }
         });
     }
