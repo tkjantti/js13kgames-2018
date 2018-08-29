@@ -4,8 +4,6 @@
     const playerSpeed = 1.5;
     const diagonalSpeedCoefficient = 0.707;
 
-    const artifactCount = 3;
-
     const TILE_WIDTH = 32;
     const TILE_HEIGHT = 32;
 
@@ -37,27 +35,66 @@
 
     const tileSheetImage = '../images/tilesheet.png';
 
-    const map =
-        "                          " +
-        "                          " +
-        "                          " +
-        "           ####           " +
-        "           #@@#           " +
-        "    #      #@@#           " +
-        "    #      ####       ##  " +
-        "    #                  #  " +
-        "    #                  #  " +
-        "             ====         " +
-        "                =         " +
-        "                =         " +
-        "         ###    =         " +
-        "           #              " +
-        "                          " +
-        "   #                 #    " +
-        "   ##               ###   " +
-        "    #                     " +
-        "                          " +
-        "                          ";
+    const maps = [
+        [
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "        ##A##       ",
+            "        #####       ",
+            "        ##@##       ",
+            "        #####       ",
+            "        #####       ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+        ],
+        [
+            "                    ",
+            "                    ",
+            "                    ",
+            "         ####       ",
+            "         #GG#       ",
+            "         #GG#       ",
+            " #@###############  ",
+            " #################  ",
+            "                #A  ",
+            "          GG        ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+        ],
+        [
+            "                          ",
+            "       G                  ",
+            "                          ",
+            "           ####           ",
+            "           #@@#      #A#  ",
+            "    #      #@@#          G",
+            "    #      ####       ##  ",
+            "    # G                #  ",
+            "    #                  #  ",
+            "             ====         ",
+            "             ##A=   G     ",
+            "              ##=         ",
+            "         ###   #=         ",
+            "           #    G         ",
+            "                          ",
+            "   #                 #    ",
+            "   ##   A           ###   ",
+            "   G#          G          ",
+            "                          ",
+            "                          "
+        ]
+    ];
+
+    let mapIndex = 0;
 
     let tileEngine;
 
@@ -70,18 +107,31 @@
 
     let player;
 
-    let online = true;
+    let online;
 
     // When online mode was requested on/off (it takes a little time to toggle it).
     let onlineToggleSwitchTime;
 
     // Last time when online mode was toggled on/off.
-    let onlineLatestToggleTime = performance.now();
+    let onlineLatestToggleTime;
 
     // How long to wait until next on/off toggle.
-    let onlineToggleWaitTime = 10000;
+    let onlineToggleWaitTime;
 
     let levelDone = false;
+
+    function resetLevel() {
+        uiSprites = [];
+        uiSpritesToAdd = [];
+        sprites = [];
+        spritesToBeAdded = [];
+        artifacts = [];
+        online = true;
+        onlineToggleSwitchTime = null;
+        onlineLatestToggleTime = performance.now();
+        onlineToggleWaitTime = 10000;
+        levelDone = false;
+    }
 
     function getRandomInt(max) {
         return Math.floor(Math.random() * Math.floor(max));
@@ -136,12 +186,6 @@
             break;
         }
     };
-
-    function getRandomPosition(margin = 40) {
-        let x = margin + Math.random() * (tileEngine.mapWidth - 2 * margin);
-        let y = margin + Math.random() * (tileEngine.mapHeight - 2 * margin);
-        return kontra.vector(x, y);
-    }
 
     function collidesWithLayer(sprite, layer) {
         let cameraCoordinateBounds = {
@@ -215,8 +259,8 @@
         let result = kontra.sprite({
             type: 'ghost',
             position: position,
-            width: TILE_WIDTH,
-            height: TILE_HEIGHT,
+            width: 30,
+            height: 30,
             color: 'red',
             ttl: Infinity,
             dir: getRandomInt(5),
@@ -318,7 +362,7 @@
         let result = kontra.sprite({
             type: 'player',
             position: position,
-            color: 'green',
+            color: 'cyan',
             width: 20,
             height: 30,
             items: [],
@@ -376,42 +420,47 @@
         return result;
     }
 
-    function getStartingPosition() {
-        for (let i = 0; i < 20; i++) {
-            let pos = getRandomPosition();
-            if (sprites.every(s => getDistance(pos, s.position) > 100)) { // jshint ignore:line
-                return pos;
+    function findPositionsOf(map, element) {
+        let result = [];
+        for (let rowIndex = 0; rowIndex < map.length; rowIndex++) {
+            let row = map[rowIndex];
+            for (let colIndex = 0; colIndex < row.length; colIndex++) {
+                if (row[colIndex] === element) {
+                    result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
+                }
             }
         }
 
-        return null;
+        return result;
     }
 
-    function mapFromString(str, convert) {
-        return str.split('').map(convert);
+    function mapFromData(array, convert) {
+        return array.reduce((total, current) => total + current).split('').map(convert);
     }
 
-    function createMap() {
+    function createMap(map) {
+        resetLevel();
+
         tileEngine = kontra.tileEngine({
             tileWidth: TILE_WIDTH,
             tileHeight: TILE_HEIGHT,
-            width: 26,
-            height: 20,
+            width: map[0].length,
+            height: map.length,
         });
 
         tileEngine.addTilesets({
             image: kontra.assets.images[tileSheetImage],
         });
 
-        const blockerData = mapFromString(
-            map, tile => (tile === '#' || tile === '@') ? TILE_BLOCKER : 0);
+        const blockerData = mapFromData(
+            map, tile => (tile === '#' || tile === '@' || tile === 'A') ? TILE_BLOCKER : 0);
 
         tileEngine.addLayers([{
             name: LAYER_GROUND,
-            data: mapFromString(map, tile => tile === ' ' ? TILE_GROUND : 0),
+            data: mapFromData(map, tile => (tile === ' ' || tile === 'G') ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
-            data: mapFromString(map, tile => tile === '=' ? TILE_WALL : 0),
+            data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
             render: true,
         }, {
             name: LAYER_FLASHING,
@@ -423,29 +472,27 @@
             render: false,
         }, {
             name: LAYER_BASES,
-            data: mapFromString(map, tile => tile === '@' ? TILE_BASE : 0),
+            data: mapFromData(map, tile => tile === '@' ? TILE_BASE : 0),
             render: false,
         }]);
 
-        player = createPlayer(kontra.vector(tileEngine.mapWidth / 2, tileEngine.mapHeight * 0.3));
+        let playerPosition = findPositionsOf(map, '@')[0];
+        playerPosition.x += 5;
+        player = createPlayer(playerPosition);
         sprites.push(player);
 
-        for (let i = 0; i < artifactCount; i++) {
-            let pos = getStartingPosition();
-            if (pos) {
-                let artifact = createArtifact(pos, i);
-                artifacts.push(artifact);
-                sprites.push(artifact);
-            }
-        }
+        findPositionsOf(map, 'A').forEach((pos, i) => {
+            pos.x += 5;
+            pos.y += 5;
+            let artifact = createArtifact(pos, i);
+            artifacts.push(artifact);
+            sprites.push(artifact);
+        });
 
-        for (let i = 0; i < 5; i++) {
-            var pos = getStartingPosition();
-            if (pos) {
-                let ghost = createGhost(pos);
-                sprites.push(ghost);
-            }
-        }
+        findPositionsOf(map, 'G').forEach((pos) => {
+            let ghost = createGhost(pos);
+            sprites.push(ghost);
+        });
     }
 
     function createText(x, y, text, ttl) {
@@ -591,8 +638,13 @@
                 }
 
                 if (!levelDone && isWinning()) {
-                    addInfoText("YOU WIN");
                     levelDone = true;
+                    mapIndex++;
+                    if (mapIndex === maps.length) {
+                        addInfoText("YOU WIN");
+                    } else {
+                        createMap(maps[mapIndex]);
+                    }
                 }
 
                 for (let i = 0; i < uiSprites.length; i++) {
@@ -643,7 +695,7 @@
         kontra.init();
         kontra.assets.load(tileSheetImage)
             .then(() => {
-                createMap();
+                createMap(maps[mapIndex]);
                 bindKeys();
                 addInfoText("Collect all artifacts!");
                 const loop = createGameLoop();
