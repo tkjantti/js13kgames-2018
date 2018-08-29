@@ -101,9 +101,6 @@
     let uiSprites = [];
     let uiSpritesToAdd = [];
     let sprites = [];
-    let spritesToBeAdded = [];
-
-    let artifacts = [];
 
     let player;
 
@@ -124,8 +121,6 @@
         uiSprites = [];
         uiSpritesToAdd = [];
         sprites = [];
-        spritesToBeAdded = [];
-        artifacts = [];
         online = true;
         onlineToggleSwitchTime = null;
         onlineLatestToggleTime = performance.now();
@@ -219,23 +214,14 @@
             height: 20,
             ttl: Infinity,
 
-            render(x, y) {
+            render() {
                 let cx = this.context;
                 let w = this.width, h = this.height;
-                let xPos, yPos;
 
                 cx.save();
+                cx.translate(this.x, this.y);
 
-                if (y) {
-                    xPos = x;
-                    yPos = y;
-                } else {
-                    xPos = this.x;
-                    yPos = this.y;
-                }
-                cx.translate(xPos, yPos);
-
-                cx.fillStyle = collidesWithLayer(this, LAYER_BASES) ? this.color : 'black';
+                cx.fillStyle = 'black';
                 cx.strokeStyle = this.color;
                 cx.lineWidth = 3;
 
@@ -365,12 +351,7 @@
             color: 'cyan',
             width: 20,
             height: 30,
-            items: [],
             ttl: Infinity,
-
-            hasItem() {
-                return this.items.length > 0;
-            },
 
             update() {
                 let xDiff = 0, yDiff = 0;
@@ -408,11 +389,6 @@
             render() {
                 this.context.fillStyle = this.color;
                 this.context.fillRect(this.x, this.y, this.width, this.height);
-
-                for (let i = 0; i < this.items.length; i++) {
-                    let item = this.items[i];
-                    item.render(this.x + this.width / 2 - item.width / 2, this.y - 5);
-                }
             }
         });
 
@@ -485,7 +461,6 @@
             pos.x += 5;
             pos.y += 5;
             let artifact = createArtifact(pos, i);
-            artifacts.push(artifact);
             sprites.push(artifact);
         });
 
@@ -519,57 +494,7 @@
         uiSpritesToAdd.push(textSprite);
     }
 
-    function findClosestOfType(self, type) {
-        let min = Infinity;
-        let closest = null;
-
-        for (let i = 0; i < sprites.length; i++) {
-            let other = sprites[i];
-
-            if (other.type === type) {
-                let distance = getDistance(self.position, other.position);
-                if (distance < min) {
-                    min = distance;
-                    closest = other;
-                }
-            }
-        }
-
-        return closest;
-    }
-
-    function pickUpItem(player) {
-        let item = findClosestOfType(player, 'item');
-
-        if (item && getDistance(player.position, item.position) < 40) {
-            item.isPickedUp = true;
-            item.x = 0;
-            item.y = 0;
-            player.items.push(item);
-        }
-    }
-
-    function dropItem(player) {
-        if (player.hasItem()) {
-            let item = player.items.pop();
-            item.isPickedUp = false;
-            item.x = player.x + player.width / 2 - item.width / 2;
-            item.y = player.y + player.height - item.height;
-            spritesToBeAdded.push(item);
-        }
-    }
-
     function bindKeys() {
-        kontra.keys.bind('space', () => {
-            if (player.isAlive()) {
-                if (player.hasItem()) {
-                    dropItem(player);
-                } else {
-                    pickUpItem(player);
-                }
-            }
-        });
-
         kontra.keys.bind('o', () => {
             onlineToggleSwitchTime = performance.now();
         });
@@ -606,7 +531,7 @@
     }
 
     function isWinning() {
-        return artifacts.every(a => collidesWithLayer(a, LAYER_BASES));
+        return false;
     }
 
     function createGameLoop() {
@@ -652,13 +577,9 @@
                     sprite.update();
                 }
 
-                sprites = sprites.filter(s => !s.isPickedUp && s.isAlive());
+                sprites = sprites.filter(s => s.isAlive());
                 uiSprites = uiSprites.filter(s => s.isAlive());
 
-                while (spritesToBeAdded.length > 0) {
-                    let s = spritesToBeAdded.shift();
-                    sprites.push(s);
-                }
                 while (uiSpritesToAdd.length > 0) {
                     let s = uiSpritesToAdd.shift();
                     uiSprites.push(s);
