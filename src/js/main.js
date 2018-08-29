@@ -4,8 +4,6 @@
     const playerSpeed = 1.5;
     const diagonalSpeedCoefficient = 0.707;
 
-    const artifactCount = 3;
-
     const TILE_WIDTH = 32;
     const TILE_HEIGHT = 32;
 
@@ -37,28 +35,66 @@
 
     const tileSheetImage = '../images/tilesheet.png';
 
-    const map = [
-        "                          ",
-        "                          ",
-        "                          ",
-        "           ####           ",
-        "           #@@#      #A#  ",
-        "    #      #@@#           ",
-        "    #      ####       ##  ",
-        "    #                  #  ",
-        "    #                  #  ",
-        "             ====         ",
-        "             ##A=         ",
-        "              ##=         ",
-        "         ###   #=         ",
-        "           #              ",
-        "                          ",
-        "   #                 #    ",
-        "   ##   A           ###   ",
-        "    #                     ",
-        "                          ",
-        "                          "
+    const maps = [
+        [
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "        ##A##       ",
+            "        #####       ",
+            "        ##@##       ",
+            "        #####       ",
+            "        #####       ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+        ],
+        [
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            " #@###############  ",
+            " #################  ",
+            "                #A  ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
+        ],
+        [
+            "                          ",
+            "                          ",
+            "                          ",
+            "           ####           ",
+            "           #@@#      #A#  ",
+            "    #      #@@#           ",
+            "    #      ####       ##  ",
+            "    #                  #  ",
+            "    #                  #  ",
+            "             ====         ",
+            "             ##A=         ",
+            "              ##=         ",
+            "         ###   #=         ",
+            "           #              ",
+            "                          ",
+            "   #                 #    ",
+            "   ##   A           ###   ",
+            "    #                     ",
+            "                          ",
+            "                          "
+        ]
     ];
+
+    let mapIndex = 0;
 
     let tileEngine;
 
@@ -71,18 +107,31 @@
 
     let player;
 
-    let online = true;
+    let online;
 
     // When online mode was requested on/off (it takes a little time to toggle it).
     let onlineToggleSwitchTime;
 
     // Last time when online mode was toggled on/off.
-    let onlineLatestToggleTime = performance.now();
+    let onlineLatestToggleTime;
 
     // How long to wait until next on/off toggle.
-    let onlineToggleWaitTime = 10000;
+    let onlineToggleWaitTime;
 
     let levelDone = false;
+
+    function resetLevel() {
+        uiSprites = [];
+        uiSpritesToAdd = [];
+        sprites = [];
+        spritesToBeAdded = [];
+        artifacts = [];
+        online = true;
+        onlineToggleSwitchTime = null;
+        onlineLatestToggleTime = performance.now();
+        onlineToggleWaitTime = 10000;
+        levelDone = false;
+    }
 
     function getRandomInt(max) {
         return Math.floor(Math.random() * Math.floor(max));
@@ -405,7 +454,9 @@
         return array.reduce((total, current) => total + current).split('').map(convert);
     }
 
-    function createMap() {
+    function createMap(map) {
+        resetLevel();
+
         tileEngine = kontra.tileEngine({
             tileWidth: TILE_WIDTH,
             tileHeight: TILE_HEIGHT,
@@ -447,13 +498,11 @@
         sprites.push(player);
 
         findPositionsOf(map, 'A').forEach((pos, i) => {
-            if (pos) {
-                pos.x += 5;
-                pos.y += 5;
-                let artifact = createArtifact(pos, i);
-                artifacts.push(artifact);
-                sprites.push(artifact);
-            }
+            pos.x += 5;
+            pos.y += 5;
+            let artifact = createArtifact(pos, i);
+            artifacts.push(artifact);
+            sprites.push(artifact);
         });
 
         for (let i = 0; i < 5; i++) {
@@ -608,8 +657,13 @@
                 }
 
                 if (!levelDone && isWinning()) {
-                    addInfoText("YOU WIN");
                     levelDone = true;
+                    mapIndex++;
+                    if (mapIndex === maps.length) {
+                        addInfoText("YOU WIN");
+                    } else {
+                        createMap(maps[mapIndex]);
+                    }
                 }
 
                 for (let i = 0; i < uiSprites.length; i++) {
@@ -660,7 +714,7 @@
         kontra.init();
         kontra.assets.load(tileSheetImage)
             .then(() => {
-                createMap();
+                createMap(maps[mapIndex]);
                 bindKeys();
                 addInfoText("Collect all artifacts!");
                 const loop = createGameLoop();
