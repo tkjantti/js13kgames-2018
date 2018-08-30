@@ -22,9 +22,7 @@
         '#0000FF',
     ];
 
-    const ONLINE_TOGGLE_DELAY = 2000;
-    const ONLINE_MIN_TOGGLE_TIME = 8000;
-    const ONLINE_MAX_TOGGLE_TIME = 30000;
+    const ONLINE_TOGGLE_DELAY = 1500;
 
     const LAYER_GROUND = 'G';
     const LAYER_FLASHING = 'F';
@@ -36,78 +34,95 @@
     const tileSheetImage = '../images/tilesheet.png';
 
     const maps = [
-        [
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "          a  a      ",
-            "                    ",
-            "   @                ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-        ],
-        [
-            "                    ",
-            "         @     G    ",
-            "                    ",
-            "                    ",
-            "    ==     =====    ",
-            "    =   =  =#A#=    ",
-            "    =   ====###=    ",
-            "    =          =    ",
-            "    =          =    ",
-            "    ============    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-        ],
-        [
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "       ###          ",
-            "      ##A##         ",
-            "      #####         ",
-            "  ====#   #====     ",
-            "  =####   ####=     ",
-            "  =#G #   #G #=     ",
-            "  =#  #   #  #=     ",
-            "  =####   ####=     ",
-            "  ===== @ =====     ",
-            "                    ",
-            "                    ",
-        ],
-        [
-            "                    ",
-            "                    ",
-            "G   G   G   G   G   ",
-            "                    ",
-            "##################  ",
-            "                 ## ",
-            "@      a          # ",
-            "               a  # ",
-            "##############    # ",
-            "             ##   # ",
-            " G   G   G    #   # ",
-            "              #   # ",
-            "           G  #   # ",
-            "              #   # ",
-            "           G  # a # ",
-        ],
+        {
+            online: Number.POSITIVE_INFINITY,
+            offline: 0,
+            data: [
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "          a  a      ",
+                "                    ",
+                "   @                ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+            ]
+        },
+        {
+            online: Number.POSITIVE_INFINITY,
+            offline: 0,
+            data: [
+                "                    ",
+                "         @     G    ",
+                "                    ",
+                "                    ",
+                "    ==     =====    ",
+                "    =   =  =#A#=    ",
+                "    =   ====###=    ",
+                "    =          =    ",
+                "    =          =    ",
+                "    ============    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+            ]
+        },
+        {
+            online: Number.POSITIVE_INFINITY,
+            offline: 0,
+            data: [
+                "                    ",
+                "                    ",
+                "                    ",
+                "                    ",
+                "       ###          ",
+                "      ##A##         ",
+                "      #####         ",
+                "  ====#   #====     ",
+                "  =####   ####=     ",
+                "  =#G #   #G #=     ",
+                "  =#  #   #  #=     ",
+                "  =####   ####=     ",
+                "  ===== @ =====     ",
+                "                    ",
+                "                    ",
+            ]
+        },
+        {
+            online: 2000,
+            offline: 10000,
+            data: [
+                "                    ",
+                "                    ",
+                "G   G   G   G   G   ",
+                "                    ",
+                "##################  ",
+                "                 ## ",
+                "@      a          # ",
+                "               a  # ",
+                "##############    # ",
+                "             ##   # ",
+                " G   G   G    #   # ",
+                "              #   # ",
+                "           G  #   # ",
+                "              #   # ",
+                "           G  # a # ",
+            ]
+        },
     ];
 
     let mapIndex = 0;
+    let currentMap;
 
     let tileEngine;
 
@@ -136,7 +151,6 @@
         online = true;
         onlineToggleSwitchTime = null;
         onlineLatestToggleTime = levelStartTime = performance.now();
-        onlineToggleWaitTime = 10000;
     }
 
     function getRandomInt(max) {
@@ -409,8 +423,10 @@
 
     function findPositionsOf(map, element) {
         let result = [];
-        for (let rowIndex = 0; rowIndex < map.length; rowIndex++) {
-            let row = map[rowIndex];
+        let data = map.data;
+
+        for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
+            let row = data[rowIndex];
             for (let colIndex = 0; colIndex < row.length; colIndex++) {
                 if (row[colIndex] === element) {
                     result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
@@ -421,35 +437,39 @@
         return result;
     }
 
-    function mapFromData(array, convert) {
-        return array.reduce((total, current) => total + current).split('').map(convert);
+    function mapToLayer(map, convert) {
+        return map.data.reduce((total, current) => total + current).split('').map(convert);
     }
 
     function createMap(map) {
         resetLevel();
 
+        currentMap = map;
+
+        onlineToggleWaitTime = map.online;
+
         tileEngine = kontra.tileEngine({
             tileWidth: TILE_WIDTH,
             tileHeight: TILE_HEIGHT,
-            width: map[0].length,
-            height: map.length,
+            width: map.data[0].length,
+            height: map.data.length,
         });
 
         tileEngine.addTilesets({
             image: kontra.assets.images[tileSheetImage],
         });
 
-        const blockerData = mapFromData(
+        const blockerData = mapToLayer(
             map, tile => (tile === '#' || tile === 'A') ? TILE_BLOCKER : 0);
 
         tileEngine.addLayers([{
             name: LAYER_GROUND,
-            data: mapFromData(
+            data: mapToLayer(
                 map,
                 tile => (tile === ' ' || tile === 'G' || tile === '@' || tile === 'a') ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
-            data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
+            data: mapToLayer(map, tile => tile === '=' ? TILE_WALL : 0),
             render: true,
         }, {
             name: LAYER_FLASHING,
@@ -552,9 +572,7 @@
                 if (onlineToggleWaitTime < (now - onlineLatestToggleTime)) {
                     onlineToggleSwitchTime = now;
                     onlineLatestToggleTime = now;
-                    onlineToggleWaitTime =
-                        ONLINE_MIN_TOGGLE_TIME +
-                        Math.random() * (ONLINE_MAX_TOGGLE_TIME - ONLINE_MIN_TOGGLE_TIME);
+                    onlineToggleWaitTime = online ? currentMap.offline : currentMap.online;
                 }
 
                 if (onlineToggleSwitchTime &&
