@@ -1,3 +1,4 @@
+/* global maps */
 
 (function () {
 
@@ -22,9 +23,7 @@
         '#0000FF',
     ];
 
-    const ONLINE_TOGGLE_DELAY = 2000;
-    const ONLINE_MIN_TOGGLE_TIME = 8000;
-    const ONLINE_MAX_TOGGLE_TIME = 30000;
+    const ONLINE_TOGGLE_DELAY = 1200;
 
     const LAYER_GROUND = 'G';
     const LAYER_FLASHING = 'F';
@@ -35,66 +34,8 @@
 
     const tileSheetImage = '../images/tilesheet.png';
 
-    const maps = [
-        [
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "        ##A##       ",
-            "        #####       ",
-            "        ##@##       ",
-            "        #####       ",
-            "        #####       ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-        ],
-        [
-            "                    ",
-            "                    ",
-            "                    ",
-            "         ####       ",
-            "         #GG#       ",
-            "         #GG#       ",
-            " #@###############  ",
-            " #################  ",
-            "                #A  ",
-            "          GG        ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-            "                    ",
-        ],
-        [
-            "                          ",
-            "       G                  ",
-            "                          ",
-            "           ####           ",
-            "           #@##      #A#  ",
-            "    #      ####          G",
-            "    #      ####       ##  ",
-            "    # G                #  ",
-            "    #                  #  ",
-            "             ====         ",
-            "             ##A=   G     ",
-            "              ##=         ",
-            "         ###   #=         ",
-            "           #    G         ",
-            "                          ",
-            "   #                 #    ",
-            "   ##   A           ###   ",
-            "   G#          G          ",
-            "                          ",
-            "                          "
-        ]
-    ];
-
     let mapIndex = 0;
+    let currentMap;
 
     let tileEngine;
 
@@ -123,7 +64,6 @@
         online = true;
         onlineToggleSwitchTime = null;
         onlineLatestToggleTime = levelStartTime = performance.now();
-        onlineToggleWaitTime = 10000;
     }
 
     function getRandomInt(max) {
@@ -274,7 +214,7 @@
                     let playerPosition = player.position;
                     let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
                     let distance = getDistance(this.position, attackTarget);
-                    if (distance < 200) {
+                    if (distance < 400) {
                         if (distance > 140) {
                             // Adds some variance to how the ghosts approach the player.
                             attackTarget.addDir(this.dir, 130);
@@ -348,7 +288,7 @@
             position: position,
             color: 'cyan',
             width: 20,
-            height: 30,
+            height: 25,
             ttl: Infinity,
 
             update() {
@@ -396,8 +336,10 @@
 
     function findPositionsOf(map, element) {
         let result = [];
-        for (let rowIndex = 0; rowIndex < map.length; rowIndex++) {
-            let row = map[rowIndex];
+        let data = map.data;
+
+        for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
+            let row = data[rowIndex];
             for (let colIndex = 0; colIndex < row.length; colIndex++) {
                 if (row[colIndex] === element) {
                     result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
@@ -408,35 +350,39 @@
         return result;
     }
 
-    function mapFromData(array, convert) {
-        return array.reduce((total, current) => total + current).split('').map(convert);
+    function mapToLayer(map, convert) {
+        return map.data.reduce((total, current) => total + current).split('').map(convert);
     }
 
     function createMap(map) {
         resetLevel();
 
+        currentMap = map;
+
+        onlineToggleWaitTime = map.online;
+
         tileEngine = kontra.tileEngine({
             tileWidth: TILE_WIDTH,
             tileHeight: TILE_HEIGHT,
-            width: map[0].length,
-            height: map.length,
+            width: map.data[0].length,
+            height: map.data.length,
         });
 
         tileEngine.addTilesets({
             image: kontra.assets.images[tileSheetImage],
         });
 
-        const blockerData = mapFromData(
+        const blockerData = mapToLayer(
             map, tile => (tile === '#' || tile === 'A') ? TILE_BLOCKER : 0);
 
         tileEngine.addLayers([{
             name: LAYER_GROUND,
-            data: mapFromData(
+            data: mapToLayer(
                 map,
-                tile => (tile === ' ' || tile === 'G' || tile === '@') ? TILE_GROUND : 0),
+                tile => (tile === ' ' || tile === 'G' || tile === '@' || tile === 'a') ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
-            data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
+            data: mapToLayer(map, tile => tile === '=' ? TILE_WALL : 0),
             render: true,
         }, {
             name: LAYER_FLASHING,
@@ -453,7 +399,7 @@
         player = createPlayer(playerPosition);
         sprites.push(player);
 
-        let artifactPositions = findPositionsOf(map, 'A');
+        let artifactPositions = findPositionsOf(map, 'A').concat(findPositionsOf(map, 'a'));
         artifactCount = artifactPositions.length;
         numberOfArtifactsCollected = 0;
         artifactPositions.forEach((pos, i) => {
@@ -469,10 +415,17 @@
         });
     }
 
-    function drawText(cx, x, y, text) {
+    function drawStatusText(cx, text) {
         cx.fillStyle = 'white';
-        cx.font = "16px Sans-serif";
-        cx.fillText(text, x, y);
+        cx.font = "20px Sans-serif";
+        cx.fillText(text, kontra.canvas.width * 0.48, 40);
+    }
+
+    function drawInfoText(cx, text) {
+        cx.fillStyle = 'white';
+        cx.font = "22px Sans-serif";
+        let textWidth = text.length * 14;
+        cx.fillText(text, kontra.canvas.width / 2 - textWidth / 2, 120);
     }
 
     function bindKeys() {
@@ -539,9 +492,7 @@
                 if (onlineToggleWaitTime < (now - onlineLatestToggleTime)) {
                     onlineToggleSwitchTime = now;
                     onlineLatestToggleTime = now;
-                    onlineToggleWaitTime =
-                        ONLINE_MIN_TOGGLE_TIME +
-                        Math.random() * (ONLINE_MAX_TOGGLE_TIME - ONLINE_MIN_TOGGLE_TIME);
+                    onlineToggleWaitTime = online ? currentMap.offline : currentMap.online;
                 }
 
                 if (onlineToggleSwitchTime &&
@@ -575,18 +526,12 @@
                 }
                 cx.restore();
 
-                drawText(
-                    cx,
-                    kontra.canvas.width / 2, 20,
-                    `${numberOfArtifactsCollected} / ${artifactCount}`);
+                drawStatusText(cx, `${numberOfArtifactsCollected} / ${artifactCount}`);
 
                 if (isWinning()) {
-                    drawText(cx, kontra.canvas.width * 0.46, 80, "YOU WIN!");
-                } else if ((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) {
-                    drawText(
-                        cx,
-                        kontra.canvas.width * 0.42, kontra.canvas.height * 0.25,
-                        "Collect all artifacts!");
+                    drawInfoText(cx, "YOU WIN!");
+                } else if (((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
+                    drawInfoText(cx, currentMap.text);
                 }
             }
         });
