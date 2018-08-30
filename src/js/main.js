@@ -502,10 +502,17 @@
         });
     }
 
-    function drawText(cx, x, y, text) {
+    function drawStatusText(cx, text) {
         cx.fillStyle = 'white';
-        cx.font = "16px Sans-serif";
-        cx.fillText(text, x, y);
+        cx.font = "20px Sans-serif";
+        cx.fillText(text, kontra.canvas.width * 0.48, 40);
+    }
+
+    function drawInfoText(cx, text) {
+        cx.fillStyle = 'white';
+        cx.font = "24px Sans-serif";
+        let textWidth = text.length * 14;
+        cx.fillText(text, kontra.canvas.width / 2 - textWidth / 2, 120);
     }
 
     function bindKeys() {
@@ -606,18 +613,12 @@
                 }
                 cx.restore();
 
-                drawText(
-                    cx,
-                    kontra.canvas.width / 2, 20,
-                    `${numberOfArtifactsCollected} / ${artifactCount}`);
+                drawStatusText(cx, `${numberOfArtifactsCollected} / ${artifactCount}`);
 
                 if (isWinning()) {
-                    drawText(cx, kontra.canvas.width * 0.46, 80, "YOU WIN!");
+                    drawInfoText(cx, "YOU WIN!");
                 } else if ((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) {
-                    drawText(
-                        cx,
-                        kontra.canvas.width * 0.42, kontra.canvas.height * 0.25,
-                        "Collect all artifacts!");
+                    drawInfoText(cx, "COLLECT ALL ARTIFACTS");
                 }
             }
         });
