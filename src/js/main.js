@@ -37,6 +37,7 @@
         {
             online: Number.POSITIVE_INFINITY,
             offline: 0,
+            text: "COLLECT THE ARTIFACTS.",
             data: [
                 "                    ",
                 "                    ",
@@ -47,7 +48,7 @@
                 "                    ",
                 "          a  a      ",
                 "                    ",
-                "   @                ",
+                "      @             ",
                 "                    ",
                 "                    ",
                 "                    ",
@@ -58,6 +59,7 @@
         {
             online: Number.POSITIVE_INFINITY,
             offline: 0,
+            text: "AVOID THE GHOSTS.",
             data: [
                 "                    ",
                 "         @     G    ",
@@ -80,6 +82,7 @@
         {
             online: Number.POSITIVE_INFINITY,
             offline: 0,
+            text: "THIS ONE IS EASY.",
             data: [
                 "                    ",
                 "                    ",
@@ -99,8 +102,9 @@
             ]
         },
         {
-            online: 2000,
+            online: 2500,
             offline: 10000,
+            text: "THEY WON'T HURT YOU. UNLESS...",
             data: [
                 "                    ",
                 "                    ",
@@ -510,7 +514,7 @@
 
     function drawInfoText(cx, text) {
         cx.fillStyle = 'white';
-        cx.font = "24px Sans-serif";
+        cx.font = "22px Sans-serif";
         let textWidth = text.length * 14;
         cx.fillText(text, kontra.canvas.width / 2 - textWidth / 2, 120);
     }
@@ -617,8 +621,8 @@
 
                 if (isWinning()) {
                     drawInfoText(cx, "YOU WIN!");
-                } else if ((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) {
-                    drawInfoText(cx, "COLLECT ALL ARTIFACTS");
+                } else if (((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
+                    drawInfoText(cx, currentMap.text);
                 }
             }
         });
