@@ -433,7 +433,7 @@
             name: LAYER_GROUND,
             data: mapFromData(
                 map,
-                tile => (tile === ' ' || tile === 'G' || tile === '@') ? TILE_GROUND : 0),
+                tile => (tile === ' ' || tile === 'G' || tile === '@' || tile === 'a') ? TILE_GROUND : 0),
         }, {
             name: LAYER_WALLS,
             data: mapFromData(map, tile => tile === '=' ? TILE_WALL : 0),
@@ -453,7 +453,7 @@
         player = createPlayer(playerPosition);
         sprites.push(player);
 
-        let artifactPositions = findPositionsOf(map, 'A');
+        let artifactPositions = findPositionsOf(map, 'A').concat(findPositionsOf(map, 'a'));
         artifactCount = artifactPositions.length;
         numberOfArtifactsCollected = 0;
         artifactPositions.forEach((pos, i) => {
