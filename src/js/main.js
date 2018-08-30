@@ -22,7 +22,7 @@
         '#0000FF',
     ];
 
-    const ONLINE_TOGGLE_DELAY = 1500;
+    const ONLINE_TOGGLE_DELAY = 1200;
 
     const LAYER_GROUND = 'G';
     const LAYER_FLASHING = 'F';
@@ -102,7 +102,7 @@
             ]
         },
         {
-            online: 2500,
+            online: 3000,
             offline: 10000,
             text: "THEY WON'T HURT YOU. UNLESS...",
             data: [
@@ -121,6 +121,28 @@
                 "           G  #   # ",
                 "              #   # ",
                 "           G  # a # ",
+            ]
+        },
+        {
+            online: 5000,
+            offline: 1600,
+            text: "STAY WITHIN THE LINES.",
+            data: [
+                " @#  #  #  #  #  #  # G#  ",
+                "  # G#  # G#  #G #  #  #  ",
+                "####################A#####",
+                "G #  #  #  # G#  # G#  # G",
+                "  #  #  #  #  #  #  #  #  ",
+                "#####A####################",
+                "  # G#  # G#  #  #  #G #  ",
+                "  #  #  #  #  #  #  #  #  ",
+                "##############A###########",
+                " G#  #  #  # G#  # G#  # G",
+                "  #  #  #  #  #  #  #  #  ",
+                "#####A###########A########",
+                "  #  #  #  #  #  #  # G#  ",
+                "  # G#  # G#  #  #  #  #  ",
+                "##########################",
             ]
         },
     ];
@@ -379,7 +401,7 @@
             position: position,
             color: 'cyan',
             width: 20,
-            height: 30,
+            height: 25,
             ttl: Infinity,
 
             update() {
