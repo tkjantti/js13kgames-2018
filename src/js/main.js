@@ -183,8 +183,8 @@
         let result = kontra.sprite({
             type: 'ghost',
             position: position,
-            width: 30,
-            height: 30,
+            width: 22,
+            height: 22,
             color: 'red',
             ttl: Infinity,
             dir: getRandomInt(5),
@@ -257,13 +257,18 @@
             },
 
             render() {
-                let w = this.width, h = this.height, cx = this.context;
+                let cx = this.context;
+
+                // Different size for drawing than for collision checking.
+                let w = this.width * 1.4, h = this.height * 1.4;
+                let x = this.x - (w - this.width) * 0.5;
+                let y = this.y - (h - this.height) * 0.70;
 
                 cx.save();
-                cx.translate(this.x, this.y);
+                cx.translate(x, y);
 
                 cx.fillStyle = this.color;
-                cx.fillRect(0, h/2, this.width, h/2);
+                cx.fillRect(0, h/2, w, h/2);
 
                 cx.beginPath();
                 cx.arc(w/2, h/2, w/2, 0, 2 * Math.PI);
@@ -274,6 +279,7 @@
                 cx.arc(w*0.3, h/2, w*0.15, 0, 2 * Math.PI);
                 cx.arc(w*0.7, h/2, w*0.15, 0, 2 * Math.PI);
                 cx.fill();
+
                 cx.restore();
             }
         });
