@@ -98,7 +98,6 @@
 
     let tileEngine;
 
-    let uiSprites = [];
     let sprites = [];
 
     let player;
@@ -120,7 +119,6 @@
     let levelStartTime;
 
     function resetLevel() {
-        uiSprites = [];
         sprites = [];
         online = true;
         onlineToggleSwitchTime = null;
@@ -556,13 +554,7 @@
                     createMap(maps[mapIndex]);
                 }
 
-                for (let i = 0; i < uiSprites.length; i++) {
-                    let sprite = uiSprites[i];
-                    sprite.update();
-                }
-
                 sprites = sprites.filter(s => s.isAlive());
-                uiSprites = uiSprites.filter(s => s.isAlive());
             },
 
             render() {
@@ -582,11 +574,6 @@
                     sprite.render();
                 }
                 cx.restore();
-
-                for (let i = 0; i < uiSprites.length; i++) {
-                    let sprite = uiSprites[i];
-                    sprite.render();
-                }
 
                 drawText(
                     cx,
