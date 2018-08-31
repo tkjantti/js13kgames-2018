@@ -20,6 +20,7 @@
         "gulp-clean-css": "^3.10.0",
         "gulp-concat": "^2.6.1",
         "gulp-html-replace": "^1.6.2",
+        "gulp-imagemin": "^4.1.0",
         "gulp-minify-html": "^1.0.6",
         "gulp-rename": "^1.4.0",
         "gulp-rimraf": "^0.2.2",

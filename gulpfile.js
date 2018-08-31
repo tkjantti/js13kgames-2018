@@ -10,6 +10,7 @@ const minifyHTML = require('gulp-minify-html');
 const minifyCSS = require('gulp-clean-css');
 const minifyJS = require('gulp-terser');
 const concat = require('gulp-concat');
+const imagemin = require('gulp-imagemin');
 const runSequence = require('run-sequence');
 const zip = require('gulp-zip');
 const checkFileSize = require('gulp-check-filesize');
@@ -65,8 +66,9 @@ gulp.task('buildJS', () => {
         .pipe(gulp.dest(paths.dist.dir));
 });
 
-gulp.task('copyImages', () => {
+gulp.task('optimizeImages', () => {
     return gulp.src(paths.src.images)
+        .pipe(imagemin())
         .pipe(gulp.dest(paths.dist.images));
 });
 
@@ -82,7 +84,7 @@ gulp.task('zip', () => {
 gulp.task('build', callback => {
     runSequence(
         ['cleanDist', 'cleanZip'],
-        ['buildCSS', 'buildHTML', 'buildJS', 'copyImages'],
+        ['buildCSS', 'buildHTML', 'buildJS', 'optimizeImages'],
         'zip',
         callback);
 });
