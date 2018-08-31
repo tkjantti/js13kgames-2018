@@ -32,7 +32,9 @@
 
     const HELP_TEXT_DISPLAY_TIME = 3000;
 
-    const tileSheetImage = '../images/tilesheet.png';
+    const tileSheetImagePath = '../images/tilesheet.png';
+
+    let tileSheetImage;
 
     let mapIndex = 0;
     let currentMap;
@@ -375,7 +377,7 @@
         });
 
         tileEngine.addTilesets({
-            image: kontra.assets.images[tileSheetImage],
+            image: tileSheetImage
         });
 
         const blockerData = mapToLayer(
@@ -545,15 +547,16 @@
 
     function main() {
         kontra.init();
-        kontra.assets.load(tileSheetImage)
-            .then(() => {
-                createMap(maps[mapIndex]);
-                bindKeys();
-                const loop = createGameLoop();
-                loop.start();
-            }).catch(error => {
-                console.log(error); // jshint ignore:line
-            });
+
+        tileSheetImage = document.createElement('img');
+        tileSheetImage.src = tileSheetImagePath;
+
+        tileSheetImage.onload = () => {
+            createMap(maps[mapIndex]);
+            bindKeys();
+            const loop = createGameLoop();
+            loop.start();
+        };
     }
 
     main();
