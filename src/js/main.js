@@ -158,7 +158,7 @@
     }
 
     function createArtifact(position, number) {
-        let result = {
+        return {
             type: 'item',
             position: position,
             color: artifactColors[number % artifactColors.length],
@@ -196,12 +196,10 @@
                 cx.restore();
             }
         };
-
-        return result;
     }
 
     function createGhost(position) {
-        let result = {
+        return {
             type: 'ghost',
             position: position,
             width: 22,
@@ -309,12 +307,10 @@
                 cx.restore();
             }
         };
-
-        return result;
     }
 
     function createPlayer(position) {
-        let result = {
+        return {
             type: 'player',
             position: position,
             width: 20,
@@ -374,8 +370,6 @@
                 cx.fillRect(this.x, this.y, this.width, this.height);
             }
         };
-
-        return result;
     }
 
     function findPositionsOf(map, element) {
