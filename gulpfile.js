@@ -19,7 +19,7 @@ const paths = {
     src: {
         html: 'src/index.html',
         css: 'src/css/*.css',
-        js: ['src/js/kontra.js', 'src/js/maps.js', 'src/js/main.js', 'src/js/*.js'],
+        js: ['src/js/kontra.js', 'src/js/player-small.js', 'src/js/maps.js', 'src/js/main.js', 'src/js/*.js'],
         images: 'src/images/**',
     },
     dist: {
