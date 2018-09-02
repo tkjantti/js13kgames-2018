@@ -165,7 +165,6 @@
             color: artifactColors[number % artifactColors.length],
             width: 20,
             height: 20,
-            ttl: Infinity,
 
             get x() {
                 return this.position.x;
@@ -217,7 +216,6 @@
             width: 22,
             height: 22,
             color: 'red',
-            ttl: Infinity,
             dir: getRandomInt(5),
 
             get x() {
@@ -257,7 +255,7 @@
                     } else {
                         movement = this._target.minus(this.position).normalized();
                     }
-                } else if (true/* player.isAlive() */) {
+                } else if (!player.dead) {
                     let playerPosition = player.position;
                     let attackTarget = new Vector(playerPosition.x, playerPosition.y);
                     let distance = getDistance(this.position, attackTarget);
@@ -339,7 +337,6 @@
             color: 'cyan',
             width: 20,
             height: 25,
-            ttl: Infinity,
 
             get x() {
                 return this.position.x;
@@ -355,6 +352,13 @@
 
             set y(value) {
                 this.position = new Vector(this.position.x, value);
+            },
+
+            collidesWith(other) {
+                return this.x < other.x + other.width &&
+                    this.x + this.width > other.x &&
+                    this.y < other.y + other.height &&
+                    this.y + this.height > other.y;
             },
 
             update() {
@@ -525,13 +529,13 @@
                 (sprite.color !== 'yellow') &&
                 player.collidesWith(sprite))
             {
-                player.ttl = 0;
+                player.dead = true;
             }
 
             if ((sprite.type === 'item') &&
                 player.collidesWith(sprite))
             {
-                sprite.ttl = 0;
+                sprite.dead = true;
                 numberOfArtifactsCollected++;
             }
         }
@@ -571,7 +575,7 @@
                     createMap(maps[mapIndex]);
                 }
 
-                // TODO sprites = sprites.filter(s => s.isAlive());
+                sprites = sprites.filter(s => !s.dead);
             },
 
             render() {
