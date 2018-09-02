@@ -173,14 +173,6 @@
                 return this.position.y;
             },
 
-            set x(value) {
-                this.position = new Vector(value, this.position.y);
-            },
-
-            set y(value) {
-                this.position = new Vector(this.position.x, value);
-            },
-
             update() {},
 
             render() {
@@ -223,14 +215,6 @@
 
             get y() {
                 return this.position.y;
-            },
-
-            set x(value) {
-                this.position = new Vector(value, this.position.y);
-            },
-
-            set y(value) {
-                this.position = new Vector(this.position.x, value);
             },
 
             update() {
@@ -342,14 +326,6 @@
 
             get y() {
                 return this.position.y;
-            },
-
-            set x(value) {
-                this.position = new Vector(value, this.position.y);
-            },
-
-            set y(value) {
-                this.position = new Vector(this.position.x, value);
             },
 
             collidesWith(other) {
