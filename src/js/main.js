@@ -378,8 +378,10 @@
                 }
 
                 let newBounds = {
-                    x: this.x + xDiff,
-                    y: this.y + yDiff,
+                    // keep within the map
+                    x: Math.min(Math.max(this.x + xDiff, 0), tileEngine.mapWidth - this.width),
+                    y: Math.min(Math.max(this.y + yDiff, 0), tileEngine.mapHeight - this.height),
+
                     width: this.width,
                     height: this.height,
                 };
