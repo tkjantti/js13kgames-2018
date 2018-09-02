@@ -34,6 +34,8 @@
 
     const tileSheetImagePath = '../images/tilesheet.png';
 
+    let cx; // Convas context
+
     let tileSheetImage;
 
     let mapIndex = 0;
@@ -72,14 +74,62 @@
         return Math.floor(Math.random() * Math.floor(max));
     }
 
-    kontra.vector.prototype.minus = function (v) {
-        return kontra.vector(this.x - v.x, this.y - v.y);
-    };
+    class Vector {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
 
-    kontra.vector.prototype.magnitude = function() {
-        return Math.sqrt(this.x * this.x + this.y * this.y);
-    };
+        add(v) {
+            this.x += v.x;
+            this.y += v.y;
+        }
 
+        plus(v) {
+            return new Vector(this.x + v.x, this.y + v.y);
+        }
+
+        minus(v) {
+            return new Vector(this.x - v.x, this.y - v.y);
+        }
+
+        magnitude() {
+            return Math.sqrt(this.x * this.x + this.y * this.y);
+        }
+
+        normalized() {
+            let length = this.magnitude();
+            if (length === 0.0) {
+                return new Vector(0, 0);
+            }
+            return new Vector(this.x / length, this.y / length);
+        }
+
+        addDir(dir, magnitude) {
+            switch (dir) {
+            case DIR_WEST:
+                this.x -= magnitude;
+                break;
+            case DIR_EAST:
+                this.x += magnitude;
+                break;
+            case DIR_NORTH:
+                this.y -= magnitude;
+                break;
+            case DIR_SOUTH:
+                this.y += magnitude;
+                break;
+            case DIR_NONE:
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    /*
+     * Gets distance between two positions.
+     */
     function getDistance(a, b) {
         return a.minus(b).magnitude();
     }
@@ -90,37 +140,8 @@
         let toX = spriteTo.x + spriteTo.width / 2;
         let toY = spriteTo.y + spriteTo.height / 2;
 
-        return kontra.vector(toX - fromX, toY - fromY);
+        return new Vector(toX - fromX, toY - fromY);
     }
-
-    kontra.vector.prototype.normalized = function () {
-        let length = this.magnitude();
-        if (length === 0.0) {
-            return kontra.vector(0, 0);
-        }
-        return kontra.vector(this.x / length, this.y / length);
-    };
-
-    kontra.vector.prototype.addDir = function (dir, magnitude) {
-        switch (dir) {
-        case DIR_WEST:
-            this.x -= magnitude;
-            break;
-        case DIR_EAST:
-            this.x += magnitude;
-            break;
-        case DIR_NORTH:
-            this.y -= magnitude;
-            break;
-        case DIR_SOUTH:
-            this.y += magnitude;
-            break;
-        case DIR_NONE:
-            break;
-        default:
-            break;
-        }
-    };
 
     function collidesWithLayer(sprite, layer) {
         let cameraCoordinateBounds = {
@@ -136,16 +157,8 @@
         return online && collidesWithLayer(sprite, LAYER_BLOCKERS);
     }
 
-    function keepWithinMap(sprite) {
-        sprite.position.clamp(
-            0,
-            0,
-            tileEngine.mapWidth - sprite.width,
-            tileEngine.mapHeight - sprite.height);
-    }
-
     function createArtifact(position, number) {
-        let result = kontra.sprite({
+        let result = {
             type: 'item',
             position: position,
             number: number,
@@ -154,8 +167,25 @@
             height: 20,
             ttl: Infinity,
 
+            get x() {
+                return this.position.x;
+            },
+
+            get y() {
+                return this.position.y;
+            },
+
+            set x(value) {
+                this.position = new Vector(value, this.position.y);
+            },
+
+            set y(value) {
+                this.position = new Vector(this.position.x, value);
+            },
+
+            update() {},
+
             render() {
-                let cx = this.context;
                 let w = this.width, h = this.height;
 
                 cx.save();
@@ -175,14 +205,13 @@
 
                 cx.restore();
             }
-        });
+        };
 
-        keepWithinMap(result);
         return result;
     }
 
     function createGhost(position) {
-        let result = kontra.sprite({
+        let result = {
             type: 'ghost',
             position: position,
             width: 22,
@@ -191,12 +220,28 @@
             ttl: Infinity,
             dir: getRandomInt(5),
 
+            get x() {
+                return this.position.x;
+            },
+
+            get y() {
+                return this.position.y;
+            },
+
+            set x(value) {
+                this.position = new Vector(value, this.position.y);
+            },
+
+            set y(value) {
+                this.position = new Vector(this.position.x, value);
+            },
+
             update() {
                 let movement;
 
                 if (collidesWithBlockers(this)) {
                     this.color = 'yellow';
-                    let randomDirection = kontra.vector(
+                    let randomDirection = new Vector(
                         (-0.5 + Math.random()) * 20,
                         (-0.5 + Math.random()) * 20);
                     this.position.add(randomDirection);
@@ -212,9 +257,9 @@
                     } else {
                         movement = this._target.minus(this.position).normalized();
                     }
-                } else if (player.isAlive()) {
+                } else if (true/* player.isAlive() */) {
                     let playerPosition = player.position;
-                    let attackTarget = kontra.vector(playerPosition.x, playerPosition.y);
+                    let attackTarget = new Vector(playerPosition.x, playerPosition.y);
                     let distance = getDistance(this.position, attackTarget);
                     if (distance < 400) {
                         if (distance > 140) {
@@ -236,7 +281,7 @@
                     if (!collidesWithBlockers(newBounds)) {
                         this.position.add(movement);
                     } else {
-                        let newTarget = kontra.vector(this.x, this.y);
+                        let newTarget = new Vector(this.x, this.y);
 
                         // Back off a little.
                         newTarget.x -= movement.x * 5;
@@ -259,8 +304,6 @@
             },
 
             render() {
-                let cx = this.context;
-
                 // Different size for drawing than for collision checking.
                 let w = this.width * 1.4, h = this.height * 1.4;
                 let x = this.x - (w - this.width) * 0.5;
@@ -284,20 +327,35 @@
 
                 cx.restore();
             }
-        });
+        };
 
-        keepWithinMap(result);
         return result;
     }
 
     function createPlayer(position) {
-        let result = kontra.sprite({
+        let result = {
             type: 'player',
             position: position,
             color: 'cyan',
             width: 20,
             height: 25,
             ttl: Infinity,
+
+            get x() {
+                return this.position.x;
+            },
+
+            get y() {
+                return this.position.y;
+            },
+
+            set x(value) {
+                this.position = new Vector(value, this.position.y);
+            },
+
+            set y(value) {
+                this.position = new Vector(this.position.x, value);
+            },
 
             update() {
                 let xDiff = 0, yDiff = 0;
@@ -327,18 +385,16 @@
                 };
 
                 if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
-                    this.x = newBounds.x;
-                    this.y = newBounds.y;
+                    this.position = new Vector(newBounds.x, newBounds.y);
                 }
             },
 
             render() {
-                this.context.fillStyle = this.color;
-                this.context.fillRect(this.x, this.y, this.width, this.height);
+                cx.fillStyle = this.color;
+                cx.fillRect(this.x, this.y, this.width, this.height);
             }
-        });
+        };
 
-        keepWithinMap(result);
         return result;
     }
 
@@ -350,7 +406,7 @@
             let row = data[rowIndex];
             for (let colIndex = 0; colIndex < row.length; colIndex++) {
                 if (row[colIndex] === element) {
-                    result.push(kontra.vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
+                    result.push(new Vector(colIndex * TILE_WIDTH, rowIndex * TILE_HEIGHT));
                 }
             }
         }
@@ -513,11 +569,10 @@
                     createMap(maps[mapIndex]);
                 }
 
-                sprites = sprites.filter(s => s.isAlive());
+                // TODO sprites = sprites.filter(s => s.isAlive());
             },
 
             render() {
-                let cx = kontra.context;
                 tileEngine.render();
                 if (onlineToggleSwitchTime && (Math.random() >= 0.5)) {
                     tileEngine.renderLayer(LAYER_FLASHING);
@@ -547,6 +602,7 @@
 
     function main() {
         kontra.init();
+        cx = kontra.context;
 
         tileSheetImage = document.createElement('img');
         tileSheetImage.src = tileSheetImagePath;
