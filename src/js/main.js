@@ -161,7 +161,6 @@
         let result = {
             type: 'item',
             position: position,
-            number: number,
             color: artifactColors[number % artifactColors.length],
             width: 20,
             height: 20,
@@ -334,7 +333,6 @@
         let result = {
             type: 'player',
             position: position,
-            color: 'cyan',
             width: 20,
             height: 25,
 
@@ -396,7 +394,7 @@
             },
 
             render() {
-                cx.fillStyle = this.color;
+                cx.fillStyle = 'cyan';
                 cx.fillRect(this.x, this.y, this.width, this.height);
             }
         };
