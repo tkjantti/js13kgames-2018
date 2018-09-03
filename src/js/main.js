@@ -12,6 +12,11 @@
     const playerSpeed = 1.5;
     const diagonalSpeedCoefficient = 0.707;
 
+    const KEY_LEFT = 37;
+    const KEY_UP = 38;
+    const KEY_RIGHT = 39;
+    const KEY_DOWN = 40;
+
     const TILE_WIDTH = 32;
     const TILE_HEIGHT = 32;
 
@@ -40,6 +45,8 @@
     const HELP_TEXT_DISPLAY_TIME = 3000;
 
     const tileSheetImagePath = '../images/tilesheet.png';
+
+    let keysDown = {};
 
     let cx; // Convas context
 
@@ -341,15 +348,15 @@
             update() {
                 let xDiff = 0, yDiff = 0;
 
-                if (kontra.keys.pressed('left')) {
+                if (keysDown[KEY_LEFT]) {
                     xDiff = -playerSpeed;
-                } else if (kontra.keys.pressed('right')) {
+                } else if (keysDown[KEY_RIGHT]) {
                     xDiff = playerSpeed;
                 }
 
-                if (kontra.keys.pressed('up')) {
+                if (keysDown[KEY_UP]) {
                     yDiff = -playerSpeed;
-                } else if (kontra.keys.pressed('down')) {
+                } else if (keysDown[KEY_DOWN]) {
                     yDiff = playerSpeed;
                 }
 
@@ -474,8 +481,12 @@
     }
 
     function bindKeys() {
-        kontra.keys.bind('o', () => {
-            onlineToggleSwitchTime = performance.now();
+        document.addEventListener("keydown", e => {
+            keysDown[e.which] = true;
+        });
+
+        document.addEventListener("keyup", e => {
+            keysDown[e.which] = false;
         });
     }
 
