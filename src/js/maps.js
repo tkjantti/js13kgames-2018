@@ -49,7 +49,7 @@ const maps = [
     {
         online: Number.POSITIVE_INFINITY,
         offline: 0,
-        text: "THIS ONE IS EASY.",
+        text: "THESE WON'T HURT YOU.",
         data: [
             "                    ",
             "                    ",
@@ -71,7 +71,7 @@ const maps = [
     {
         online: 4000,
         offline: 10000,
-        text: "THEY WON'T HURT YOU. UNLESS...",
+        text: "UNLESS...",
         data: [
             "                          ",
             "                          ",
