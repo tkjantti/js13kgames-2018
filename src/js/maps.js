@@ -49,7 +49,7 @@ const maps = [
     {
         online: Number.POSITIVE_INFINITY,
         offline: 0,
-        text: "THIS ONE IS EASY.",
+        text: "THESE WON'T HURT YOU.",
         data: [
             "                    ",
             "                    ",
@@ -71,7 +71,7 @@ const maps = [
     {
         online: 4000,
         offline: 10000,
-        text: "THEY WON'T HURT YOU. UNLESS...",
+        text: "UNLESS...",
         data: [
             "                          ",
             "                          ",
@@ -89,6 +89,57 @@ const maps = [
             " G    G    G    G    G    ",
             "                          ",
             "                          ",
+        ]
+    },
+    {
+        online: 4000,
+        offline: 2000,
+        text: "KEEP GOING.",
+        data: [
+            "     G  G               ##",
+            " #   ##########         ##",
+            "@########     ###   ##    ",
+            "              a  #  ##    ",
+            "####   ####   ##### ###   ",
+            " G                ### #   ",
+            "     G              ###a  ",
+            "                     ###  ",
+            "                     #### ",
+            "                 G   ### #",
+            "                   #  # #G",
+            "                 #  # ## #",
+            "            ######   ###  ",
+            "           #      a # #   ",
+            "          #         ##    ",
+            "           #  G     #    G",
+            "     G    #       # #     ",
+            "          #      #   G    ",
+            "###              #        ",
+            "######    a    ##         ",
+            " ###A#      ##            ",
+            "G  ####     GG       G    ",
+        ]
+    },
+    {
+        online: 5000,
+        offline: 1500,
+        text: "BOO!",
+        data: [
+            "                    ",
+            "                    ",
+            "                    ",
+            "    =============   ",
+            "    =#        Ga=   ",
+            "    =#  == ====G=   ",
+            "    =#  =#A= #= =   ",
+            "    =#  =#A= #= =   ",
+            "    =#  == ==== =   ",
+            "    =# @       a=   ",
+            "    =============   ",
+            "                    ",
+            "                    ",
+            "                    ",
+            "                    ",
         ]
     },
     {
