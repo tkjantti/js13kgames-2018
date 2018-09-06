@@ -141,6 +141,10 @@
         }
     }
 
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
     /*
      * Gets distance between two positions.
      */
@@ -360,15 +364,15 @@
                     yDiff = playerSpeed;
                 }
 
-                if (xDiff !== 0 && yDiff !== 0) {
+                if (xDiff && yDiff) {
                     xDiff *= diagonalSpeedCoefficient;
                     yDiff *= diagonalSpeedCoefficient;
                 }
 
                 let newBounds = {
                     // keep within the map
-                    x: Math.min(Math.max(this.x + xDiff, 0), tileEngine.mapWidth - this.width),
-                    y: Math.min(Math.max(this.y + yDiff, 0), tileEngine.mapHeight - this.height),
+                    x: clamp(this.x + xDiff, 0, tileEngine.mapWidth - this.width),
+                    y: clamp(this.y + yDiff, 0, tileEngine.mapHeight - this.height),
 
                     width: this.width,
                     height: this.height,
@@ -376,6 +380,28 @@
 
                 if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
                     this.position = new Vector(newBounds.x, newBounds.y);
+                } else if (xDiff && yDiff) {
+                    // Check if can move horizontally.
+                    newBounds = {
+                        x: clamp(this.x + xDiff, 0, tileEngine.mapWidth - this.width),
+                        y: this.y,
+                        width: this.width,
+                        height: this.height,
+                    };
+                    if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
+                        this.position = new Vector(newBounds.x, newBounds.y);
+                    } else {
+                        // Check if can move vertically.
+                        newBounds = {
+                            x: this.x,
+                            y: clamp(this.y + yDiff, 0, tileEngine.mapHeight - this.height),
+                            width: this.width,
+                            height: this.height,
+                        };
+                        if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
+                            this.position = new Vector(newBounds.x, newBounds.y);
+                        }
+                    }
                 }
             },
 
