@@ -46,6 +46,17 @@
 
     const tileSheetImagePath = '../images/tilesheet.png';
 
+    // Texts shown when winning the game.
+    const finalTexts = [
+        "YOU DID IT.",
+        "YOU FINISHED THE GAME",
+        "A JS13KGAMES 2018 ENTRY",
+        "AUTHORS:",
+        "TERO JÄNTTI",
+        "SAMI HEIKKINEN",
+        "" // Creates a pause
+    ];
+
     let keysDown = {};
 
     let cx; // Convas context
@@ -612,6 +623,7 @@
             },
 
             render() {
+                let time = performance.now() - levelStartTime;
                 tileEngine.render();
                 if (onlineToggleSwitchTime && (Math.random() >= 0.5)) {
                     tileEngine.renderLayer(LAYER_FLASHING);
@@ -632,8 +644,13 @@
                     drawStatusText(cx, `${numberOfArtifactsCollected} / ${artifactCount}`);
                 }
 
-                if (((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
+                if ((time < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
                     drawInfoText(cx, currentMap.text);
+                }
+
+                if (gameIsFinished() && 2 * HELP_TEXT_DISPLAY_TIME < time) {
+                    let i = Math.floor((time - 2 * HELP_TEXT_DISPLAY_TIME) / HELP_TEXT_DISPLAY_TIME) % finalTexts.length;
+                    drawInfoText(cx, finalTexts[i]);
                 }
             }
         });
