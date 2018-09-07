@@ -77,11 +77,22 @@
 
     let levelStartTime;
 
+    // Angle for the ghosts in the winning animation.
+    let ghostAngle = 0;
+
     function resetLevel() {
         sprites = [];
         online = true;
         onlineToggleSwitchTime = null;
         onlineLatestToggleTime = levelStartTime = performance.now();
+    }
+
+    function mapIsFinished() {
+        return numberOfArtifactsCollected === artifactCount;
+    }
+
+    function gameIsFinished() {
+        return mapIndex >= (maps.length - 1);
     }
 
     function getRandomInt(max) {
@@ -216,10 +227,11 @@
         };
     }
 
-    function createGhost(position) {
+    function createGhost(position, number) {
         return {
             type: 'ghost',
             position: position,
+            number: number,
             width: 22,
             height: 22,
             color: 'red',
@@ -254,6 +266,11 @@
                     } else {
                         movement = this._target.minus(this.position).normalized();
                     }
+                } else if (gameIsFinished() && 1500 < (performance.now() - levelStartTime)) {
+                    let angle = ghostAngle + this.number * 0.3;
+                    const r = 200;
+                    let target = player.position.plus(new Vector(Math.cos(angle) * r, Math.sin(angle) * r));
+                    movement = target.minus(this.position).normalized();
                 } else if (!player.dead) {
                     let playerPosition = player.position;
                     let attackTarget = new Vector(playerPosition.x, playerPosition.y);
@@ -487,8 +504,8 @@
             sprites.push(artifact);
         });
 
-        findPositionsOf(map, 'G').forEach((pos) => {
-            let ghost = createGhost(pos);
+        findPositionsOf(map, 'G').forEach((pos, i) => {
+            let ghost = createGhost(pos, i);
             sprites.push(ghost);
         });
     }
@@ -534,6 +551,10 @@
     }
 
     function checkCollisions() {
+        if (mapIsFinished()) {
+            return;
+        }
+
         for (let i = 0; i < sprites.length; i++) {
             let sprite = sprites[i];
 
@@ -552,10 +573,6 @@
                 numberOfArtifactsCollected++;
             }
         }
-    }
-
-    function isWinning() {
-        return numberOfArtifactsCollected === artifactCount;
     }
 
     function createGameLoop() {
@@ -584,11 +601,13 @@
                     onlineToggleSwitchTime = null;
                 }
 
-                if (isWinning() && (++mapIndex < maps.length)) {
-                    createMap(maps[mapIndex]);
+                if (mapIsFinished() && (mapIndex < maps.length - 1)) {
+                    createMap(maps[++mapIndex]);
                 }
 
                 sprites = sprites.filter(s => !s.dead);
+
+                ghostAngle += 0.005; // Update winning animation
             },
 
             render() {
@@ -608,12 +627,11 @@
                 }
                 cx.restore();
 
-                drawStatusText(cx, `${numberOfArtifactsCollected} / ${artifactCount}`);
+                if (artifactCount) {
+                    drawStatusText(cx, `${numberOfArtifactsCollected} / ${artifactCount}`);
+                }
 
-                if (isWinning()) {
-                    drawInfoText(cx, "YOU WIN!");
-                    stopTune(); // Winning effects here?        `
-                } else if (((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
+                if (((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
                     drawInfoText(cx, currentMap.text);
                 }
             }
