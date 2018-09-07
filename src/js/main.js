@@ -24,8 +24,6 @@
     const TILE_WALL = 3;
     const TILE_BLOCKER = 4;
 
-    const DIR_NONE = 0, DIR_WEST = 1, DIR_EAST = 2, DIR_NORTH = 3, DIR_SOUTH = 4;
-
     const artifactColors = [
         '#FFFF00',
         '#FF00FF',
@@ -106,10 +104,6 @@
         return mapIndex >= (maps.length - 1);
     }
 
-    function getRandomInt(max) {
-        return Math.floor(Math.random() * Math.floor(max));
-    }
-
     class Vector {
         constructor(x, y) {
             this.x = x;
@@ -139,27 +133,6 @@
                 return new Vector(0, 0);
             }
             return new Vector(this.x / length, this.y / length);
-        }
-
-        addDir(dir, magnitude) {
-            switch (dir) {
-            case DIR_WEST:
-                this.x -= magnitude;
-                break;
-            case DIR_EAST:
-                this.x += magnitude;
-                break;
-            case DIR_NORTH:
-                this.y -= magnitude;
-                break;
-            case DIR_SOUTH:
-                this.y += magnitude;
-                break;
-            case DIR_NONE:
-                break;
-            default:
-                break;
-            }
         }
     }
 
@@ -246,7 +219,6 @@
             width: 22,
             height: 22,
             color: 'red',
-            dir: getRandomInt(5),
 
             get x() {
                 return this.position.x;
@@ -283,17 +255,8 @@
                     let target = player.position.plus(
                         new Vector(Math.cos(angle) * r, Math.sin(angle) * r));
                     movement = target.minus(this.position).normalized();
-                } else if (!player.dead) {
-                    let playerPosition = player.position;
-                    let attackTarget = new Vector(playerPosition.x, playerPosition.y);
-                    let distance = getDistance(this.position, attackTarget);
-                    if (distance < 400) {
-                        if (distance > 140) {
-                            // Adds some variance to how the ghosts approach the player.
-                            attackTarget.addDir(this.dir, 130);
-                        }
-                        movement = getMovementBetween(this, player).normalized();
-                    }
+                } else if (!player.dead && getDistance(this.position, player.position) < 400) {
+                    movement = getMovementBetween(this, player).normalized();
                 }
 
                 if (movement) {
