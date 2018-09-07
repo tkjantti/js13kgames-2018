@@ -268,8 +268,9 @@
                     }
                 } else if (gameIsFinished() && 1500 < (performance.now() - levelStartTime)) {
                     let angle = ghostAngle + this.number * 0.3;
-                    const r = 200;
-                    let target = player.position.plus(new Vector(Math.cos(angle) * r, Math.sin(angle) * r));
+                    let r = 180 + Math.sin(ghostAngle * 10) * 30;
+                    let target = player.position.plus(
+                        new Vector(Math.cos(angle) * r, Math.sin(angle) * r));
                     movement = target.minus(this.position).normalized();
                 } else if (!player.dead) {
                     let playerPosition = player.position;
