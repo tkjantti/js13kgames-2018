@@ -163,18 +163,8 @@
         return new Vector(toX - fromX, toY - fromY);
     }
 
-    function collidesWithLayer(sprite, layer) {
-        let cameraCoordinateBounds = {
-            x: -tileEngine.sx + sprite.x,
-            y: -tileEngine.sy + sprite.y,
-            width: sprite.width,
-            height: sprite.height
-        };
-        return tileEngine.layerCollidesWith(layer, cameraCoordinateBounds);
-    }
-
     function collidesWithBlockers(sprite) {
-        return online && collidesWithLayer(sprite, LAYER_BLOCKERS);
+        return online && tileEngine.layerCollidesWith(LAYER_BLOCKERS, sprite);
     }
 
     function createArtifact(position, number) {
@@ -377,7 +367,7 @@
                     height: this.height,
                 };
 
-                if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
+                if (!tileEngine.layerCollidesWith(LAYER_WALLS, newBounds)) {
                     this.position = new Vector(newBounds.x, newBounds.y);
                 } else if (xDiff && yDiff) {
                     // Check if can move horizontally.
@@ -387,7 +377,7 @@
                         width: this.width,
                         height: this.height,
                     };
-                    if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
+                    if (!tileEngine.layerCollidesWith(LAYER_WALLS, newBounds)) {
                         this.position = new Vector(newBounds.x, newBounds.y);
                     } else {
                         // Check if can move vertically.
@@ -397,7 +387,7 @@
                             width: this.width,
                             height: this.height,
                         };
-                        if (!collidesWithLayer(newBounds, LAYER_WALLS)) {
+                        if (!tileEngine.layerCollidesWith(LAYER_WALLS, newBounds)) {
                             this.position = new Vector(newBounds.x, newBounds.y);
                         }
                     }
@@ -528,23 +518,6 @@
         });
     }
 
-    function adjustCamera() {
-        const margin = 200;
-        const cameraSpeed = playerSpeed;
-
-        if (player.x - tileEngine.sx < margin) {
-            tileEngine.sx -= cameraSpeed;
-        } else if ((tileEngine.sx + kontra.canvas.width) - player.x < margin) {
-            tileEngine.sx += cameraSpeed;
-        }
-
-        if (player.y - tileEngine.sy < margin) {
-            tileEngine.sy -= cameraSpeed;
-        } else if ((tileEngine.sy + kontra.canvas.height) - player.y < margin) {
-            tileEngine.sy += cameraSpeed;
-        }
-    }
-
     function checkCollisions() {
         for (let i = 0; i < sprites.length; i++) {
             let sprite = sprites[i];
@@ -578,8 +551,6 @@
                 }
 
                 checkCollisions();
-
-                adjustCamera();
 
                 let now = performance.now();
 
@@ -615,7 +586,6 @@
                 }
 
                 cx.save();
-                cx.translate(-tileEngine.sx, -tileEngine.sy);
                 for (let i = 0; i < sprites.length; i++) {
                     let sprite = sprites[i];
                     sprite.render();
