@@ -12,6 +12,7 @@ const minifyJS = require('gulp-terser');
 const concat = require('gulp-concat');
 const imagemin = require('gulp-imagemin');
 const runSequence = require('run-sequence');
+const jshint = require('gulp-jshint');
 const zip = require('gulp-zip');
 const checkFileSize = require('gulp-check-filesize');
 
@@ -20,6 +21,7 @@ const paths = {
         html: 'src/index.html',
         css: 'src/css/*.css',
         js: ['src/js/kontra.js', 'src/js/player-small.js', 'src/js/maps.js', 'src/js/main.js', 'src/js/*.js'],
+        jsNoLibraries: ['src/js/maps.js', 'src/js/main.js'],
         images: 'src/images/**',
     },
     dist: {
@@ -72,6 +74,12 @@ gulp.task('optimizeImages', () => {
         .pipe(gulp.dest(paths.dist.images));
 });
 
+gulp.task('lintJS', () => {
+    return gulp.src(paths.src.jsNoLibraries)
+        .pipe(jshint())
+        .pipe(jshint.reporter('default'));
+});
+
 gulp.task('zip', () => {
     const limit = 13 * 1024;
 
@@ -83,13 +91,14 @@ gulp.task('zip', () => {
 
 gulp.task('build', callback => {
     runSequence(
+        ['lintJS'],
         ['cleanDist', 'cleanZip'],
         ['buildCSS', 'buildHTML', 'buildJS', 'optimizeImages'],
         'zip',
         callback);
 });
 
-gulp.task('browserSync', () => {
+gulp.task('browserSync', ['lintJS'], () => {
     browserSync({
         server: {
             baseDir: 'src'
@@ -98,10 +107,12 @@ gulp.task('browserSync', () => {
     });
 });
 
+gulp.task('watchJS', ['lintJS'], browserSync.reload);
+
 gulp.task('watch', ['browserSync'], () => {
     gulp.watch('src/*.html', browserSync.reload);
     gulp.watch('src/css/**/*.css', browserSync.reload);
-    gulp.watch('src/js/**/*.js', browserSync.reload);
+    gulp.watch('src/js/**/*.js', ['watchJS']);
 });
 
 gulp.task('default', ['watch']);
