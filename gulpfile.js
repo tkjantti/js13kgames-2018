@@ -91,13 +91,14 @@ gulp.task('zip', () => {
 
 gulp.task('build', callback => {
     runSequence(
+        ['lintJS'],
         ['cleanDist', 'cleanZip'],
         ['buildCSS', 'buildHTML', 'buildJS', 'optimizeImages'],
         'zip',
         callback);
 });
 
-gulp.task('browserSync', () => {
+gulp.task('browserSync', ['lintJS'], () => {
     browserSync({
         server: {
             baseDir: 'src'
@@ -106,10 +107,12 @@ gulp.task('browserSync', () => {
     });
 });
 
+gulp.task('watchJS', ['lintJS'], browserSync.reload);
+
 gulp.task('watch', ['browserSync'], () => {
     gulp.watch('src/*.html', browserSync.reload);
     gulp.watch('src/css/**/*.css', browserSync.reload);
-    gulp.watch('src/js/**/*.js', browserSync.reload);
+    gulp.watch('src/js/**/*.js', ['watchJS']);
 });
 
 gulp.task('default', ['watch']);
