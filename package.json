@@ -21,11 +21,13 @@
         "gulp-concat": "^2.6.1",
         "gulp-html-replace": "^1.6.2",
         "gulp-imagemin": "^4.1.0",
+        "gulp-jshint": "^2.1.0",
         "gulp-minify-html": "^1.0.6",
         "gulp-rename": "^1.4.0",
         "gulp-rimraf": "^0.2.2",
         "gulp-terser": "^1.0.1",
         "gulp-zip": "^4.2.0",
+        "jshint": "^2.9.6",
         "run-sequence": "^2.2.1"
     }
 }

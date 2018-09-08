@@ -12,6 +12,7 @@ const minifyJS = require('gulp-terser');
 const concat = require('gulp-concat');
 const imagemin = require('gulp-imagemin');
 const runSequence = require('run-sequence');
+const jshint = require('gulp-jshint');
 const zip = require('gulp-zip');
 const checkFileSize = require('gulp-check-filesize');
 
@@ -20,6 +21,7 @@ const paths = {
         html: 'src/index.html',
         css: 'src/css/*.css',
         js: ['src/js/kontra.js', 'src/js/player-small.js', 'src/js/maps.js', 'src/js/main.js', 'src/js/*.js'],
+        jsNoLibraries: ['src/js/maps.js', 'src/js/main.js'],
         images: 'src/images/**',
     },
     dist: {
@@ -70,6 +72,12 @@ gulp.task('optimizeImages', () => {
     return gulp.src(paths.src.images)
         .pipe(imagemin())
         .pipe(gulp.dest(paths.dist.images));
+});
+
+gulp.task('lintJS', () => {
+    return gulp.src(paths.src.jsNoLibraries)
+        .pipe(jshint())
+        .pipe(jshint.reporter('default'));
 });
 
 gulp.task('zip', () => {
