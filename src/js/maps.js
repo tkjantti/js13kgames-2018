@@ -164,4 +164,26 @@ const maps = [
             "##########################",
         ]
     },
+    {
+        online: Number.POSITIVE_INFINITY,
+        offline: 0,
+        text: "WHOA",
+        data: [
+            "     G G G G G G    ",
+            "  G               G ",
+            "                    ",
+            "                    ",
+            "G                   ",
+            "                   G",
+            "                    ",
+            "G        @          ",
+            "                    ",
+            "                   G",
+            "G                   ",
+            "                    ",
+            "                    ",
+            "  G              G  ",
+            "     G G G G G G    ",
+        ]
+    }
 ];

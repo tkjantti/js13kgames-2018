@@ -26,8 +26,6 @@
     const TILE_WALL = 3;
     const TILE_BLOCKER = 4;
 
-    const DIR_NONE = 0, DIR_WEST = 1, DIR_EAST = 2, DIR_NORTH = 3, DIR_SOUTH = 4;
-
     const artifactColors = [
         '#FFFF00',
         '#FF00FF',
@@ -47,6 +45,17 @@
     const HELP_TEXT_DISPLAY_TIME = 3000;
 
     const tileSheetImagePath = '../images/tilesheet.png';
+
+    // Texts shown when winning the game.
+    const finalTexts = [
+        "YOU DID IT.",
+        "YOU FINISHED THE GAME",
+        "A JS13KGAMES 2018 ENTRY",
+        "AUTHORS:",
+        "TERO JÄNTTI",
+        "SAMI HEIKKINEN",
+        "" // Creates a pause
+    ];
 
     let keysDown = {};
 
@@ -79,6 +88,9 @@
 
     let levelStartTime;
 
+    // Angle for the ghosts in the winning animation.
+    let ghostAngle = 0;
+
     function resetLevel() {
         sprites = [];
         online = true;
@@ -86,8 +98,12 @@
         onlineLatestToggleTime = levelStartTime = performance.now();
     }
 
-    function getRandomInt(max) {
-        return Math.floor(Math.random() * Math.floor(max));
+    function mapIsFinished() {
+        return numberOfArtifactsCollected === artifactCount;
+    }
+
+    function gameIsFinished() {
+        return mapIndex >= (maps.length - 1);
     }
 
     class Vector {
@@ -119,27 +135,6 @@
                 return new Vector(0, 0);
             }
             return new Vector(this.x / length, this.y / length);
-        }
-
-        addDir(dir, magnitude) {
-            switch (dir) {
-            case DIR_WEST:
-                this.x -= magnitude;
-                break;
-            case DIR_EAST:
-                this.x += magnitude;
-                break;
-            case DIR_NORTH:
-                this.y -= magnitude;
-                break;
-            case DIR_SOUTH:
-                this.y += magnitude;
-                break;
-            case DIR_NONE:
-                break;
-            default:
-                break;
-            }
         }
     }
 
@@ -218,14 +213,14 @@
         };
     }
 
-    function createGhost(position) {
+    function createGhost(position, number) {
         return {
             type: 'ghost',
             position: position,
+            number: number,
             width: 22,
             height: 22,
             color: 'red',
-            dir: getRandomInt(5),
 
             get x() {
                 return this.position.x;
@@ -256,17 +251,14 @@
                     } else {
                         movement = this._target.minus(this.position).normalized();
                     }
-                } else if (!player.dead) {
-                    let playerPosition = player.position;
-                    let attackTarget = new Vector(playerPosition.x, playerPosition.y);
-                    let distance = getDistance(this.position, attackTarget);
-                    if (distance < 400) {
-                        if (distance > 140) {
-                            // Adds some variance to how the ghosts approach the player.
-                            attackTarget.addDir(this.dir, 130);
-                        }
-                        movement = getMovementBetween(this, player).normalized();
-                    }
+                } else if (gameIsFinished() && 1500 < (performance.now() - levelStartTime)) {
+                    let angle = ghostAngle + this.number * 0.3;
+                    let r = 180 + Math.sin(ghostAngle * 10) * 30;
+                    let target = player.position.plus(
+                        new Vector(Math.cos(angle) * r, Math.sin(angle) * r));
+                    movement = target.minus(this.position).normalized();
+                } else if (!player.dead && getDistance(this.position, player.position) < 400) {
+                    movement = getMovementBetween(this, player).normalized();
                 }
 
                 if (movement) {
@@ -489,8 +481,8 @@
             sprites.push(artifact);
         });
 
-        findPositionsOf(map, 'G').forEach((pos) => {
-            let ghost = createGhost(pos);
+        findPositionsOf(map, 'G').forEach((pos, i) => {
+            let ghost = createGhost(pos, i);
             sprites.push(ghost);
         });
     }
@@ -536,6 +528,10 @@
     }
 
     function checkCollisions() {
+        if (mapIsFinished()) {
+            return;
+        }
+
         for (let i = 0; i < sprites.length; i++) {
             let sprite = sprites[i];
 
@@ -553,10 +549,6 @@
                 numberOfArtifactsCollected++;
             }
         }
-    }
-
-    function isWinning() {
-        return numberOfArtifactsCollected === artifactCount;
     }
 
     function createGameLoop() {
@@ -585,14 +577,17 @@
                     onlineToggleSwitchTime = null;
                 }
 
-                if (isWinning() && (++mapIndex < maps.length)) {
-                    createMap(maps[mapIndex]);
+                if (mapIsFinished() && (mapIndex < maps.length - 1)) {
+                    createMap(maps[++mapIndex]);
                 }
 
                 sprites = sprites.filter(s => !s.dead);
+
+                ghostAngle += 0.005; // Update winning animation
             },
 
             render() {
+                let time = performance.now() - levelStartTime;
                 tileEngine.render();
                 if (onlineToggleSwitchTime && (Math.random() >= 0.5)) {
                     tileEngine.renderLayer(LAYER_FLASHING);
@@ -609,16 +604,20 @@
                 }
                 cx.restore();
 
-                drawStatusText(cx, `${numberOfArtifactsCollected} / ${artifactCount}`);
+                if (artifactCount) {
+                    drawStatusText(cx, `${numberOfArtifactsCollected} / ${artifactCount}`);
+                }
 
-                if (isWinning()) {
-                    drawInfoText(cx, "YOU WIN!");
-                    playTune("end"); // Winning effects here? 
-                  } else if (player.dead) {
+                if (player.dead) {
                     drawInfoText(cx, "GAME OVER!");
                     playTune("end"); // End effects here?  `
-                  } else if (((performance.now() - levelStartTime) < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
+                } else if ((time < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
                     drawInfoText(cx, currentMap.text);
+                }
+
+                if (gameIsFinished() && 2 * HELP_TEXT_DISPLAY_TIME < time) {
+                    let i = Math.floor((time - 2 * HELP_TEXT_DISPLAY_TIME) / HELP_TEXT_DISPLAY_TIME) % finalTexts.length;
+                    drawInfoText(cx, finalTexts[i]);
                 }
             }
         });
