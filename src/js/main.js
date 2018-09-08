@@ -14,6 +14,7 @@
     const playerSpeed = 1.5;
     const diagonalSpeedCoefficient = 0.707;
 
+    const KEY_ENTER = 13;
     const KEY_LEFT = 37;
     const KEY_UP = 38;
     const KEY_RIGHT = 39;
@@ -44,6 +45,8 @@
 
     const HELP_TEXT_DISPLAY_TIME = 3000;
 
+    const MAX_LIVES = 5;
+
     const tileSheetImagePath = '../images/tilesheet.png';
 
     // Texts shown when winning the game.
@@ -62,6 +65,8 @@
     let cx; // Convas context
 
     let tileSheetImage;
+
+    let lives = MAX_LIVES;
 
     let mapIndex = 0;
     let currentMap;
@@ -490,7 +495,7 @@
     function drawStatusText(cx, text) {
         cx.fillStyle = 'white';
         cx.font = "20px Sans-serif";
-        cx.fillText(text, kontra.canvas.width * 0.48, 40);
+        cx.fillText(text, kontra.canvas.width * 0.35, 40);
     }
 
     function drawInfoText(cx, text) {
@@ -503,6 +508,19 @@
     function bindKeys() {
         document.addEventListener("keydown", e => {
             keysDown[e.which] = true;
+
+            // Restart the level when enter is pressed.
+            if (e.which === KEY_ENTER && player.dead) {
+
+                // If no more lives, restart the whole game.
+                if (lives <= 0) {
+                    mapIndex = 0;
+                    lives = MAX_LIVES;
+                }
+
+                createMap(maps[mapIndex]);
+                playTune("main");
+            }
         });
 
         document.addEventListener("keyup", e => {
@@ -528,18 +546,18 @@
     }
 
     function checkCollisions() {
-        if (mapIsFinished()) {
-            return;
-        }
-
         for (let i = 0; i < sprites.length; i++) {
             let sprite = sprites[i];
 
             if ((sprite.type === 'ghost') &&
                 (sprite.color !== 'yellow') &&
-                player.collidesWith(sprite))
+                player.collidesWith(sprite) &&
+                !player.dead &&
+                !mapIsFinished())
             {
                 player.dead = true;
+                playTune("end");
+                lives--;
             }
 
             if ((sprite.type === 'item') &&
@@ -605,12 +623,11 @@
                 cx.restore();
 
                 if (artifactCount) {
-                    drawStatusText(cx, `${numberOfArtifactsCollected} / ${artifactCount}`);
+                    drawStatusText(cx, `A: ${numberOfArtifactsCollected} / ${artifactCount}             L: ${lives}`);
                 }
 
                 if (player.dead) {
-                    drawInfoText(cx, "GAME OVER!");
-                    playTune("end"); // End effects here?  `
+                    drawInfoText(cx, (lives > 0) ? "TRY AGAIN (ENTER)" : "GAME OVER! (ENTER)");
                 } else if ((time < HELP_TEXT_DISPLAY_TIME) && currentMap.text) {
                     drawInfoText(cx, currentMap.text);
                 }
@@ -638,10 +655,8 @@
                 break;
             }
             case "end": {
-                if (endTune.played.length == 0) { // To play only once when looping rendering
-                    mainTune.pause();
-                    endTune.play();
-                }
+                mainTune.pause();
+                endTune.play();
                 break;
             }
         }
@@ -661,6 +676,7 @@
                 // Put the generated song in an Audio element.
                 var wave = songplayer.createWave();
                 audioTrack.src = URL.createObjectURL(new Blob([wave], { type: "audio/wav" }));
+                audioTrack.loop = isLooped;
                 //audioTrack.play();
             }
         }, 0);
