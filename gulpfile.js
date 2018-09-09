@@ -14,7 +14,7 @@ const imagemin = require('gulp-imagemin');
 const runSequence = require('run-sequence');
 const jshint = require('gulp-jshint');
 const zip = require('gulp-zip');
-const checkFileSize = require('gulp-check-filesize');
+const size = require('gulp-size');
 
 const paths = {
     src: {
@@ -81,12 +81,14 @@ gulp.task('lintJS', () => {
 });
 
 gulp.task('zip', () => {
-    const limit = 13 * 1024;
-
     return gulp.src(`${paths.dist.dir}/**`)
         .pipe(zip('game.zip'))
         .pipe(gulp.dest('zip'))
-        .pipe(checkFileSize({ fileSizeLimit: limit }));
+        .pipe(size({
+            showFiles: true,
+            // Pretty would show a kilobyte as 1000, not as 1024 what is needed.
+            pretty: false
+        }));
 });
 
 gulp.task('build', callback => {
