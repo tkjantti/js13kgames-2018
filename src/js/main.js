@@ -406,10 +406,23 @@
                 cx.fillRect(x, y, w, h);
 
                 cx.translate(x, y);
-                cx.fillStyle = 'black';
+
+                cx.fillStyle = 'gray';
+                cx.beginPath();
+                cx.arc(w * 0.3, h / 2, w * 0.18, 0, 2 * Math.PI);
+                cx.arc(w * 0.7, h / 2, w * 0.18, 0, 2 * Math.PI);
+                cx.fill();
+
+                cx.fillStyle = 'white';
                 cx.beginPath();
                 cx.arc(w * 0.32, h / 2, w * 0.15, 0, 2 * Math.PI);
                 cx.arc(w * 0.68, h / 2, w * 0.15, 0, 2 * Math.PI);
+                cx.fill();
+
+                cx.fillStyle = 'black';
+                cx.beginPath();
+                cx.arc(w * 0.32, h / 2, w * 0.05, 0, 2 * Math.PI);
+                cx.arc(w * 0.68, h / 2, w * 0.05, 0, 2 * Math.PI);
                 cx.fill();
 
                 cx.restore();
