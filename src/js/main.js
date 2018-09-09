@@ -399,7 +399,20 @@
 
             render() {
                 cx.fillStyle = 'cyan';
-                cx.fillRect(this.x, this.y, this.width, this.height);
+                // Different size for drawing than for collision checking.
+                let w = this.width * 1.2, h = this.height * 1.1;
+                let x = this.x - (w - this.width) * 0.5;
+                let y = this.y - (h - this.height) * 0.7 + 4;
+                cx.fillRect(x, y, w, h);
+
+                cx.translate(x, y);
+                cx.fillStyle = 'black';
+                cx.beginPath();
+                cx.arc(w * 0.32, h / 2, w * 0.15, 0, 2 * Math.PI);
+                cx.arc(w * 0.68, h / 2, w * 0.15, 0, 2 * Math.PI);
+                cx.fill();
+
+                cx.restore();
             }
         };
     }
