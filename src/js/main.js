@@ -61,13 +61,22 @@
 
     // Texts shown when winning the game.
     const finalTexts = [
-        "YOU DID IT.",
-        "YOU FINISHED THE GAME",
+        "YOU DID IT",
+        "YOU FINISHED 'THEY FOLLOW'",
         "A JS13KGAMES 2018 ENTRY",
+        "", // a pause
         "AUTHORS:",
         "TERO JÄNTTI",
         "SAMI HEIKKINEN",
-        "" // Creates a pause
+        "",
+        "THANK YOU:",
+        "STRAKER - KONTRA LIBRARY",
+        "BITS'N'BITES - SOUNDBOX",
+        "SHREYAS MINOCHA - JS13K-BOILERPLATE",
+        "THE WHOLE JS13KGAMES COMMUNITY :)",
+        "",
+        "THANKS FOR PLAYING!",
+        ""
     ];
 
     let keysDown = {};
