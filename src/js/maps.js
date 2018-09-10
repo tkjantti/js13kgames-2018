@@ -4,7 +4,7 @@ const maps = [
     {
         online: Number.POSITIVE_INFINITY,
         offline: 0,
-        text: "COLLECT THE ARTIFACTS.",
+        text: "COLLECT THE ARTIFACTS",
         data: [
             "                    ",
             "                    ",
@@ -26,7 +26,7 @@ const maps = [
     {
         online: Number.POSITIVE_INFINITY,
         offline: 0,
-        text: "AVOID THE GHOSTS.",
+        text: "AVOID THE GHOSTS",
         data: [
             "                    ",
             "         @     G    ",
@@ -48,7 +48,7 @@ const maps = [
     {
         online: Number.POSITIVE_INFINITY,
         offline: 0,
-        text: "THESE WON'T HURT YOU.",
+        text: "THESE WON'T HURT YOU",
         data: [
             "                    ",
             "                    ",
@@ -93,7 +93,7 @@ const maps = [
    {
         online: 4000,
         offline: 2000,
-        text: "KEEP GOING.",
+        text: "KEEP GOING",
         data: [
             "@         #####    G",
             " ###         #A     ",
@@ -137,7 +137,7 @@ const maps = [
     {
         online: 5000,
         offline: 1600,
-        text: "STAY WITHIN THE LINES.",
+        text: "STAY WITHIN THE LINES",
         data: [
             "  #  #  #  #  #  #  ",
             " @# G#  # G#  #G #  ",
@@ -154,6 +154,36 @@ const maps = [
             "  #  #  #  #  #  #  ",
             "  # G#  # G#  #  #  ",
             "########A###########",
+        ]
+    },
+    {
+        online: 15000,
+        offline: 9000,
+        text: "GOOD LUCK",
+        data: [
+            "==========  ##    ##             ",
+            "=########= #  #    ##   #####   G",
+            "=#    G #=##   #A      ##   ##   ",
+            "=# =#   #=#     ##     #     #   ",
+            "=# =###A#=# ===  #   ###     #   ",
+            "=# =======# ===  ##  #    ===   =",
+            "=#      ## #==    ###  #   =#   =",
+            "=#####  ##== # ===     #   =#  a=",
+            "         ######        #    =   =",
+            "    #####=    #####    #    =   #",
+            "#####   =  == #   # = ##   ##   #",
+            "#  G#===    = # @ # =##   =##   #",
+            "#  =#===    = #   # ===  =##    #",
+            "#  =#===      #####  =# G=#a   G#",
+            "#  =#===#=           =#  =###   =",
+            "#  =#===#### =====  #=#   ===   =",
+            "#  =#=### # =    ############   =",
+            "#  =### ###=  #  #  #       #   =",
+            " =### ####=  #   #   ===    #   =",
+            "##A# ####=  #   ###  =a=   ###  =",
+            "#######=   ##    #          #   =",
+            " G==# ########   ###############=",
+            "                           G### =",
         ]
     },
     {
