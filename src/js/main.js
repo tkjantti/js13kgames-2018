@@ -127,11 +127,6 @@
             this.y = y;
         }
 
-        add(v) {
-            this.x += v.x;
-            this.y += v.y;
-        }
-
         plus(v) {
             return new Vector(this.x + v.x, this.y + v.y);
         }
@@ -263,7 +258,7 @@
                     let randomDirection = new Vector(
                         (-0.5 + Math.random()) * 20,
                         (-0.5 + Math.random()) * 20);
-                    this.position.add(randomDirection);
+                    this.move(randomDirection);
                     return;
                 } else if (this.color !== 'red') {
                     this.color = 'red';
@@ -298,7 +293,7 @@
                     };
 
                     if (!collidesWithBlockers(newBounds)) {
-                        this.position.add(movement);
+                        this.move(movement);
                     } else {
                         let newTarget = new Vector(this.x, this.y);
 
@@ -320,6 +315,14 @@
                         this._targetBegin = performance.now();
                     }
                 }
+            },
+
+            // Moves by the given vector, keeping within level bounds.
+            move(movement) {
+                let newPosition = new Vector(
+                    clamp(this.x + movement.x, 0, tileEngine.mapWidth - this.width),
+                    clamp(this.y + movement.y, 0, tileEngine.mapHeight - this.height));
+                this.position = newPosition;
             },
 
             /*
