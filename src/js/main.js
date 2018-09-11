@@ -56,7 +56,9 @@
 
     const beginingText = "THEY FOLLOW";
 
-    const readyText = "THEY FOLLOW  -  Press enter to start";
+    const readyText = "Press enter";
+
+    let gameStarted = false;
 
 
     // Texts shown when winning the game.
@@ -597,6 +599,15 @@
         document.addEventListener("keydown", e => {
             keysDown[e.which] = true;
 
+            // Start the level when enter is pressed.
+            if (!gameStarted) {
+                createMap(maps[mapIndex]);
+                gameStarted = true;
+                playTune("main");
+                const loop = createGameLoop();
+                loop.start();
+            }
+
             // Restart the level when enter is pressed.
             if (e.which === KEY_ENTER && player.dead) {
 
@@ -786,21 +797,18 @@
     function main() {
         kontra.init();
         cx = kontra.context;
-        drawInfoText(cx,beginingText);
+        drawStatusText(cx,beginingText);
 
         initMusicPlayer(mainTune, song, true);
         initMusicPlayer(eatTune, eatEffect, false);
         initMusicPlayer(endTune, endSong, false);
-        playTune("main");
 
         tileSheetImage = document.createElement('img');
         tileSheetImage.src = tileSheetImagePath;
 
         tileSheetImage.onload = () => {
-            createMap(maps[mapIndex]);
+            drawInfoText(cx,readyText);            
             bindKeys();
-            const loop = createGameLoop();
-            loop.start();
         };
     }
 
