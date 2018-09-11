@@ -61,13 +61,22 @@
 
     // Texts shown when winning the game.
     const finalTexts = [
-        "YOU DID IT.",
-        "YOU FINISHED THE GAME",
+        "YOU DID IT",
+        "YOU FINISHED 'THEY FOLLOW'",
         "A JS13KGAMES 2018 ENTRY",
+        "", // a pause
         "AUTHORS:",
         "TERO JÄNTTI",
         "SAMI HEIKKINEN",
-        "" // Creates a pause
+        "",
+        "THANK YOU:",
+        "STRAKER - KONTRA LIBRARY",
+        "BITS'N'BITES - SOUNDBOX",
+        "SHREYAS MINOCHA - JS13K-BOILERPLATE",
+        "THE WHOLE JS13KGAMES COMMUNITY :)",
+        "",
+        "THANKS FOR PLAYING!",
+        ""
     ];
 
     let keysDown = {};
@@ -127,11 +136,6 @@
             this.y = y;
         }
 
-        add(v) {
-            this.x += v.x;
-            this.y += v.y;
-        }
-
         plus(v) {
             return new Vector(this.x + v.x, this.y + v.y);
         }
@@ -150,6 +154,13 @@
                 return new Vector(0, 0);
             }
             return new Vector(this.x / length, this.y / length);
+        }
+
+        static getRandomDir() {
+            return new Vector(
+                (Math.floor(Math.random() * 3) - 1), // -1, 0 or 1
+                (Math.floor(Math.random() * 3) - 1)
+            ).normalized();
         }
     }
 
@@ -237,6 +248,9 @@
             height: 22,
             color: 'red',
 
+            // Adds some variance to how the ghosts approach the player.
+            relativeDir: Vector.getRandomDir(),
+
             get x() {
                 return this.position.x;
             },
@@ -246,14 +260,14 @@
             },
 
             update() {
-                let movement;
+                let movement = null;
 
                 if (collidesWithBlockers(this)) {
                     this.color = 'yellow';
                     let randomDirection = new Vector(
                         (-0.5 + Math.random()) * 20,
                         (-0.5 + Math.random()) * 20);
-                    this.position.add(randomDirection);
+                    this.move(randomDirection);
                     return;
                 } else if (this.color !== 'red') {
                     this.color = 'red';
@@ -272,8 +286,11 @@
                     let target = player.position.plus(
                         new Vector(Math.cos(angle) * r, Math.sin(angle) * r));
                     movement = target.minus(this.position).normalized();
-                } else if (!player.dead && getDistance(this.position, player.position) < 400) {
-                    movement = getMovementBetween(this, player).normalized();
+                } else if (!player.dead) {
+                    let target = this._getPlayerTarget();
+                    if (target) {
+                        movement = target.minus(this.position).normalized();
+                    }
                 }
 
                 if (movement) {
@@ -285,7 +302,7 @@
                     };
 
                     if (!collidesWithBlockers(newBounds)) {
-                        this.position.add(movement);
+                        this.move(movement);
                     } else {
                         let newTarget = new Vector(this.x, this.y);
 
@@ -307,6 +324,39 @@
                         this._targetBegin = performance.now();
                     }
                 }
+            },
+
+            // Moves by the given vector, keeping within level bounds.
+            move(movement) {
+                let newPosition = new Vector(
+                    clamp(this.x + movement.x, 0, tileEngine.mapWidth - this.width),
+                    clamp(this.y + movement.y, 0, tileEngine.mapHeight - this.height));
+                this.position = newPosition;
+            },
+
+            /*
+             * Returns the position for approaching the player or null
+             * if the player is too far.
+             */
+            _getPlayerTarget() {
+                let distanceToPlayer = getDistance(this.position, player.position);
+                if (distanceToPlayer > 400) {
+                    return null;
+                }
+
+                let target = new Vector(
+                    player.x + player.width / 2,
+                    player.y + player.height / 2);
+
+                // When offline, approach the player from different
+                // directions so that the ghosts don't slump together
+                // and give a feeling of surrounding the player.
+                if (!online && distanceToPlayer > 140) {
+                    target.x += this.relativeDir.x * 130;
+                    target.y += this.relativeDir.y * 130;
+                }
+
+                return target;
             },
 
             render() {
@@ -332,6 +382,14 @@
                 cx.fill();
 
                 cx.restore();
+
+                // Uncomment for debugging player attack positions:
+                //
+                // let target = this._getPlayerTarget();
+                // if (target) {
+                //     cx.fillStyle = 'orange';
+                //     cx.fillRect(target.x - 2, target.y - 2, 4, 4);
+                // }
             }
         };
     }
