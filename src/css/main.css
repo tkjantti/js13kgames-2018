@@ -24,3 +24,8 @@ body {
 canvas {
     border: 10px solid white;
 }
+
+pre {
+    margin: 10px -5%;
+    color: #888;
+}
