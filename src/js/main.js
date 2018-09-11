@@ -601,6 +601,7 @@
 
             // Start the level when enter is pressed.
             if (!gameStarted) {
+                createMap(maps[mapIndex]);
                 gameStarted = true;
                 playTune("main");
                 const loop = createGameLoop();
@@ -806,7 +807,6 @@
         tileSheetImage.src = tileSheetImagePath;
 
         tileSheetImage.onload = () => {
-            createMap(maps[mapIndex]);
             drawInfoText(cx,readyText);            
             bindKeys();
         };
