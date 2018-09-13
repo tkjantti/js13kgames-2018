@@ -76,7 +76,7 @@
 
     const MAX_LIVES = 5;
 
-    const tileSheetImagePath = '../images/tilesheet.png';
+    const tileSheetImagePath = 'images/tilesheet.png';
 
     const beginingText = "THEY FOLLOW";
 
